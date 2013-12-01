@@ -120,12 +120,12 @@ class LockManager(object):
 
 	def get_lock_state(self, variable, txid):
 		'''
-		Check the lock type held by a transation.
+		Check the lock type held by a transaction.
 
 		Parameters
 		----------
 		txid : integer
-			Id of locking transation.
+			Id of locking transaction.
 		variable : integer
 			Id of variable.
 

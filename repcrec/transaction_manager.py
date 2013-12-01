@@ -3,7 +3,9 @@ Database command processor.
 '''
 from repcrec.site import Site
 from repcrec.util import delegator
-from repcrec.util import *
+from repcrec.util import \
+		WaitDie, TxRecord, parse_variable, parse_txid, check_args_len, \
+		cmd_error, format_command
 import itertools as it
 import StringIO
 import collections
@@ -25,7 +27,8 @@ class TransactionManager(object):
 			Path to site data.
 		'''
 
-		# Discover owned variables.
+		# Discover owned variables by first getting map of { var : [sites] }
+		# and then getting map of { site : [owned vars] }.
 		var_to_site = reduce(lambda var_to_site, (index, var_dict):
 				reduce(lambda var_to_site, var:
 					var_to_site[var].append(index) or var_to_site,
@@ -39,6 +42,8 @@ class TransactionManager(object):
 		# Initialize database sites.
 		self._sites = [Site(index, data, site_owned_vars[index], data_path)
 				for index, data in data_file_map.iteritems()]
+
+		# Get sorted union of variables across all sites.
 		self._variables = sorted(list(set(variable
 				for variable in it.chain(*[data.iterkeys()
 					for data in data_file_map.itervalues()]))))
@@ -60,7 +65,7 @@ class TransactionManager(object):
 					'--', msg)
 
 	def _begin(self, cmd, args):
-		''' Begin a transaction. '''
+		''' Begin a transaction. This command does not block. '''
 
 		check_args_len(cmd, args, 1)
 
@@ -74,7 +79,7 @@ class TransactionManager(object):
 			self._log_at_time(txid, 'started')
 
 	def _append_end(self, cmd, args):
-		''' End a transaction. '''
+		''' Receive the command to end a transaction. '''
 
 		check_args_len(cmd, args, 1)
 
@@ -91,7 +96,12 @@ class TransactionManager(object):
 				self._runner(self._end, (transaction,)))
 
 	def _end(self, transaction):
-		''' End a transaction. '''
+		'''
+		End a transaction. Ensures that all sites are up for the duration of
+		the transaction.
+		'''
+
+		# TODO: read-only transactions do not need to abort.
 
 		del self._open_tx[transaction.txid]
 
@@ -108,9 +118,6 @@ class TransactionManager(object):
 				if site.up_since > transaction.start_time:
 					action = abort
 					break
-
-			# TODO: read-only transactions do not need to abort.
-
 		else:
 			action = abort
 
@@ -118,7 +125,7 @@ class TransactionManager(object):
 			action(site)
 
 		self._log_at_time(transaction.txid,
-				'commited' if action is commit else 'aborted')
+				'committed' if action is commit else 'aborted')
 
 		self._commit_abort_log.append((
 			transaction.txid,
@@ -148,7 +155,10 @@ class TransactionManager(object):
 				self._runner(self._read, (transaction, variable)))
 
 	def _read(self, transaction, variable):
-		''' Read a variable for a transaction. '''
+		'''
+		Read a variable for a transaction. Uses the wait-die algorithm to
+		decide whether or not to block a transaction.
+		'''
 
 		# See if the transaction is not alive.
 		if transaction.alive is False:
@@ -158,15 +168,16 @@ class TransactionManager(object):
 
 		# Locate an eligible site to read.
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
+		responses = 0
 		for site in self._sites:
 			read_status = site.try_read(transaction.txid, variable)
 
 			# Ignore sites that don't manage the variable.
 			if read_status is None:
 				continue
+			responses += 1
 
 			if read_status.success is True:
-				#transaction.mark_site_accessed(site.index)
 				self._log_at_time(transaction.txid,
 						'read x{} -> {} from site {}'.format(
 							variable, read_status.value, site.index))
@@ -174,6 +185,11 @@ class TransactionManager(object):
 
 			else:
 				wait_die.append_blockers(read_status.waits_for)
+
+		if responses is 0:
+			self._log_at_time(transaction.txid,
+					'waiting to read x{}; no available sites'.format(variable))
+			return False
 
 		# See if we should block or die.
 		if wait_die.should_die():
@@ -183,7 +199,8 @@ class TransactionManager(object):
 			return True
 		else:
 			self._log_at_time(transaction.txid,
-					'blocked by T{}'.format(variable, wait_die.blocked_by))
+					'blocked by T{} reading x{}'.format(
+						wait_die.blocked_by, variable))
 			return False
 
 	def _append_write(self, cmd, args):
@@ -208,7 +225,10 @@ class TransactionManager(object):
 				self._runner(self._write, (transaction, variable, value)))
 
 	def _write(self, transaction, variable, value):
-		''' Write a variable for a transaction. '''
+		'''
+		Write a variable for a transaction. Uses the wait-die algorithm to
+		decide whether or not to block a transaction.
+		'''
 
 		# See if the transaction is not alive.
 		if transaction.alive is False:
@@ -218,6 +238,7 @@ class TransactionManager(object):
 
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
 		sites_written = set()
+		blocked = False
 		for site in self._sites:
 			write_status = site.try_write(transaction.txid, variable, value)
 
@@ -229,9 +250,11 @@ class TransactionManager(object):
 				transaction.mark_site_accessed(site.index)
 				sites_written.add(site.index)
 			else:
+				blocked = True
 				wait_die.append_blockers(write_status.waits_for)
 
-		if len(sites_written) is 0:
+		# Either we wrote no sites, some sites, or all available sites.
+		if blocked is True:
 			if wait_die.should_die():
 				transaction.die()
 				self._log_at_time(transaction.txid, 'killing by wait-die')
@@ -239,14 +262,24 @@ class TransactionManager(object):
 				return True
 			else:
 				self._log_at_time(transaction.txid,
-						'blocked by T{}'.format(variable, wait_die.blocked_by))
+						'blocked by T{} writing x{}'.format(
+							wait_die.blocked_by, variable))
 				return False
-		else:
+
+		# Here we don't need to block so long as we wrote at least 1 site.
+		elif len(sites_written) > 0:
 			self._log_at_time(transaction.txid,
 					'write x{} <- {} to sites {{{}}}'.format(
 						variable, value,
 						', '.join(it.imap(str, sites_written))))
 			return True
+
+		# Here we wrote 0 sites, so we need to wait.
+		else:
+			self._log_at_time(transaction.txid,
+					'waiting to write (x{}, {}); no available sites'.format(
+						variable, value))
+			return False
 
 	def _fail(self, cmd, args):
 		''' Fail site. '''
@@ -305,7 +338,7 @@ class TransactionManager(object):
 		''' Command function closure. '''
 
 		def closure():
-			''' The fucntion closure. '''
+			''' The function closure. '''
 			return func(*args)
 
 		return closure
@@ -323,7 +356,7 @@ class TransactionManager(object):
 			}
 
 	def send_commands(self, commands):
-		''' Execute commands using the available copies algorithm. '''
+		''' Advance tick and execute commands. '''
 
 		self._tick += 1
 
@@ -332,6 +365,7 @@ class TransactionManager(object):
 		for cmd, args in commands:
 			cmd_lower = cmd.lower()
 
+			# Send commands to their delegates using function callbacks.
 			if cmd_lower in self._COMMAND_DELEGATORS:
 				self._COMMAND_DELEGATORS[cmd_lower](self, cmd, args)
 			else:
@@ -339,12 +373,8 @@ class TransactionManager(object):
 					.format(format_command(cmd, args)))
 
 		# Try to run all pending commands until there is no more progress.
-		while True:
-			num_run = 0
-			for transaction in self._open_tx.values():
-				num_run += self._run_pending(transaction)
-			if num_run is 0:
-				break
+		for transaction in self._open_tx.values():
+			self._run_pending(transaction)
 
 	def get_commit_abort_log(self):
 		'''

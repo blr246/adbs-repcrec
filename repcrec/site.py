@@ -4,6 +4,7 @@ Database site.
 
 from repcrec.lock_manager import LockManager
 from repcrec.database_manager import DatabaseManager
+from repcrec.util import OperationStatus
 
 import collections
 
@@ -62,6 +63,7 @@ class Site(object):
 		''' Mark the Site down. '''
 		self._down = True
 		self._available_variables = set()
+		self._lock_manager = LockManager()
 
 	def recover(self, tick):
 		''' Recover downed site. '''
@@ -70,6 +72,10 @@ class Site(object):
 
 		assert len(self._available_variables) is 0, \
 				'Site was down with available variables'
+
+		for variable in self._variables:
+			assert self._lock_manager.get_locks(variable) is None, \
+					'Site was down but there are locks'
 
 		self._down = False
 		self._up_since = tick
@@ -88,48 +94,6 @@ class Site(object):
 			self._database_manager.batch_write(self._pending_writes[txid])
 			del self._pending_writes[txid]
 		self._lock_manager.unlock_all(txid)
-
-	class OperationStatus(object):
-		''' Operation status. '''
-
-		def __init__(self, success, variable, value, waits_for):
-			''' Initialize all data. '''
-
-			assert ((success is True
-				and variable is not None
-				and waits_for is None)
-				or (success is False
-					and variable is not None
-					and waits_for is not None)), 'Invalid status'
-
-			self._success = success
-			self._variable = variable
-			self._value = value
-			self._waits_for = waits_for
-
-		@property
-		def success(self):
-			''' True when the operation succeeded and False otherwise. '''
-			return self._success
-
-		@property
-		def variable(self):
-			''' Variable accessed by operation. '''
-			return self._variable
-
-		@property
-		def value(self):
-			''' Value accessed by the operation. '''
-			return self._value
-
-		@property
-		def waits_for(self):
-			'''
-			Iterable of transaction ids blocking the operation when success is
-			False and None otherwise.
-			'''
-			return self._waits_for
-
 
 	def try_read(self, txid, variable):
 		'''
@@ -182,10 +146,10 @@ class Site(object):
 				if value is None:
 					value = self._database_manager.read(variable)
 
-				return self.OperationStatus(True, variable, value, None)
+				return OperationStatus(True, variable, value, None)
 
 			else:
-				return self.OperationStatus(
+				return OperationStatus(
 						False, variable, None,
 						self._lock_manager.get_locks(variable)[0])
 
@@ -223,10 +187,10 @@ class Site(object):
 			# The write is pending until commit().
 			self._pending_writes[txid].append((variable, value))
 			self._available_variables.add(variable)
-			return self.OperationStatus(True, variable, value, None)
+			return OperationStatus(True, variable, value, None)
 
 		else:
-			return self.OperationStatus(
+			return OperationStatus(
 					False, variable, value,
 					self._lock_manager.get_locks(variable)[0])
 

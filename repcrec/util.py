@@ -17,6 +17,7 @@ class WaitDie(object):
 	def append_blockers(self, waits_for):
 		''' Append blockers to this transaction. '''
 
+		print 'waits_for:', waits_for
 		oldest_waits_for, txid = min(it.imap(
 			lambda txid: (self._open_tx[txid].start_time, txid), waits_for))
 		if oldest_waits_for < self._oldest_blocker:
@@ -66,7 +67,7 @@ class TxRecord(object):
 
 	@property
 	def alive(self):
-		''' Check if the transation is alive. '''
+		''' Check if the transaction is alive. '''
 		return self._alive
 
 	@property
@@ -106,6 +107,53 @@ class TxRecord(object):
 	def mark_site_accessed(self, site):
 		''' Mark that transaction accessed a site. '''
 		self._sites_accessed.add(site)
+
+
+class OperationStatus(object):
+	''' Operation status. '''
+
+	def __init__(self, success, variable, value, waits_for):
+		''' Initialize all data. '''
+
+		assert ((success is True
+			and variable is not None
+			and waits_for is None)
+			or (success is False
+				and variable is not None
+				and waits_for is not None)), 'Invalid status'
+
+		self._success = success
+		self._variable = variable
+		self._value = value
+		self._waits_for = waits_for
+
+	@property
+	def success(self):
+		''' True when the operation succeeded and False otherwise. '''
+		return self._success
+
+	@property
+	def variable(self):
+		''' Variable accessed by operation. '''
+		return self._variable
+
+	@property
+	def value(self):
+		''' Value accessed by the operation. '''
+		return self._value
+
+	@property
+	def waits_for(self):
+		'''
+		Iterable of transaction ids blocking the operation when success is
+		False and None otherwise.
+		'''
+		return self._waits_for
+
+	def __str__(self):
+		''' To string. '''
+		return '{{ success={}, variable=x{}, value={}, waits_for={} }}'.format(
+				self._success, self._value, self._value, self._waits_for)
 
 
 def delegator(method):
