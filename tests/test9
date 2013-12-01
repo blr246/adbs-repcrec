@@ -1,0 +1,16 @@
+// Test 9
+// T1, T2, T3 ok. T3 should wait because older
+begin(T3)
+begin(T1)
+begin(T2)
+W(T3,x2,22)
+W(T2,x4,44)
+R(T3,x4)
+end(T2)
+end(T3)
+R(T1,x2)
+end(T1)
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertCommitted(T3)

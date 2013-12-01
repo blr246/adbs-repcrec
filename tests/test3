@@ -1,0 +1,15 @@
+// Test 3
+// T1 should not abort because its site did not fail.
+// In fact all transactions commit
+begin(T1)
+begin(T2)
+R(T1,x3)
+fail(2)
+W(T2,x8,88); R(T2,x3)
+W(T1, x5,91)
+end(T2)
+recover(2)
+end(T1)
+---
+assertCommitted(T1)
+assertCommitted(T2)
