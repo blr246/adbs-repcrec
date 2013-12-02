@@ -11,6 +11,68 @@ import collections
 class Site(object):
 	''' Represents a database site. '''
 
+	class MultiversionClone(object):
+		''' A multiversion read clone. '''
+
+		def __init__(self, site, read_clone):
+			self._database_manager = read_clone
+			self._site = site
+			self._variables = self._database_manager.variables
+
+		@property
+		def index(self):
+			''' See Site.index. '''
+			return self._site.index
+
+		@property
+		def up_since(self):
+			''' See Site.up_since. '''
+			return self._site.up_since
+
+		def try_read(self, txid, variable):
+			'''
+			Try to read this site.
+
+			Parameters
+			----------
+			txid : integer
+				Transaction id.
+			variable : integer
+				Variable id to read.
+
+			Returns
+			-------
+			status : OperationStatus or None
+				None when the variable is not available and OperationStatus
+				otherwise.
+			'''
+
+			# If the site is down, then return None.
+			if self._site.up_since is None:
+				return None
+
+			# Otherwise we have a read if the variable is owned by this site.
+			if variable not in self._variables:
+				return None
+
+			return OperationStatus(True, variable,
+					self._database_manager.read(variable), None)
+
+		def try_write(self, txid, variable, value):
+			''' Read-only clones cannot write. '''
+			raise RuntimeError(('Attempted write (x{}, {}) on site {} by T{} '
+				'is not permitted; transaction is read-only').format(
+						variable, value, self.index, txid))
+
+		def abort(self, txid):
+			''' Abort an open transaction. '''
+			pass
+
+		def commit(self, txid):
+			''' Commit all pending writes for a transaction. '''
+			pass
+
+
 	def __init__(self, index, variable_defaults, owned_variables, data_path):
 		'''
 		Initialize the site.
@@ -32,7 +94,6 @@ class Site(object):
 				variable_defaults, data_path, 'site_{}'.format(index))
 		self._lock_manager = LockManager()
 		self._index = index
-		self._down = False
 		self._up_since = 0
 		self._available_variables = self._variables
 		self._owned_variables = set(owned_variables)
@@ -54,20 +115,17 @@ class Site(object):
 	@property
 	def up_since(self):
 		''' Time when site started or recovered. None if site is down. '''
-		if self._down is not True:
-			return self._up_since
-		else:
-			return None
+		return self._up_since
 
 	def mark_down(self):
 		''' Mark the Site down. '''
-		self._down = True
+		self._up_since = None
 		self._available_variables = set()
 		self._lock_manager = LockManager()
 
 	def recover(self, tick):
 		''' Recover downed site. '''
-		if self._down is not True:
+		if self._up_since is not None:
 			raise ValueError('Site is not down to recover()')
 
 		assert len(self._available_variables) is 0, \
@@ -77,7 +135,6 @@ class Site(object):
 			assert self._lock_manager.get_locks(variable) is None, \
 					'Site was down but there are locks'
 
-		self._down = False
 		self._up_since = tick
 
 	def abort(self, txid):
@@ -113,7 +170,7 @@ class Site(object):
 		'''
 
 		# Is the site down?
-		if self._down is True:
+		if self._up_since is None:
 			return None
 
 		# Does this site have this variable at all?
@@ -173,7 +230,7 @@ class Site(object):
 		'''
 
 		# Is the site down?
-		if self._down is True:
+		if self._up_since is None:
 			return None
 
 		# Does this site have this variable at all?
@@ -193,5 +250,10 @@ class Site(object):
 			return OperationStatus(
 					False, variable, value,
 					self._lock_manager.get_locks(variable)[0])
+
+	def multiversion_clone(self):
+		''' Create site clone. '''
+		return self.MultiversionClone(
+				self, self._database_manager.multiversion_clone())
 
 

@@ -14,8 +14,9 @@ class DatabaseManager(object):
 			''' Initialize from a site. '''
 			self._site = site
 			self._data = copy.deepcopy(data)
+			self._variables = tuple(self._data.keys())
 
-		def get_value(self, variable):
+		def read(self, variable):
 			''' Read a variable from the site. '''
 
 			if variable not in self._data:
@@ -27,6 +28,11 @@ class DatabaseManager(object):
 		def has_variable(self, variable):
 			''' Check that the site manages a given variable. '''
 			return variable in self._data
+
+		@property
+		def variables(self):
+			''' Get database variables. '''
+			return self._variables
 
 
 	def __init__(self,
@@ -52,6 +58,7 @@ class DatabaseManager(object):
 
 		self._cache = dict(variables)
 		self._write_counter = 0
+		self._variables = tuple(self._cache.keys())
 
 		# Open site file.
 		try:
@@ -76,7 +83,7 @@ class DatabaseManager(object):
 	@property
 	def variables(self):
 		''' Get database variables. '''
-		return self._cache.keys()
+		return self._variables
 
 	@property
 	def _data_file_tmp_path(self):

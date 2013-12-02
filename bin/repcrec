@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+'''
+Run RepCRec by taking commands from stdin or from a TestFile.
+'''
+from repcrec import TransactionManager, CommandStreamReader, TestFile
+
+import argparse
+import os
+import sys
+import itertools as it
+
+def cleanup_dir(data_dir):
+	''' Cleanup test directory. '''
+
+	for dirpath, dirnames, filenames in os.walk(
+			data_dir, topdown=False):
+		for filename in filenames:
+			os.remove(os.path.join(dirpath, filename))
+		for dirname in dirnames:
+			os.rmdir(os.path.join(dirpath, dirname))
+	os.rmdir(data_dir)
+
+def run_database(data_dir, command_stream):
+	''' Run the database. '''
+
+	# Setup default variable mappings.
+	data_file_map = dict((index, dict((variable, 10 * variable)
+		for variable in it.ifilter(
+			lambda x: (0 == (x & 1)) or (index == 1 + (x % 10)),
+			range(1, 21))))
+		for index in range(1, 11))
+
+	transaction_manager = TransactionManager(data_file_map, data_dir)
+
+	for commands in command_stream:
+		transaction_manager.send_commands(commands)
+
+	return transaction_manager
+
+def main():
+	''' Main method. '''
+
+	argument_parser = argparse.ArgumentParser()
+	argument_parser.add_argument('DATA_DIR',
+			help='Path test data.')
+	argument_parser.add_argument('-f', '--test-file',
+			dest='TEST_FILE_PATH',
+			help='Path to command file.')
+
+	args = argument_parser.parse_args()
+
+	data_dir = os.path.abspath(args.DATA_DIR)
+	if os.path.isdir(data_dir):
+		raise ValueError('Data dir {} exists'.format(data_dir))
+	print 'RepCRec starting with data directory {}'.format(data_dir)
+
+	if args.TEST_FILE_PATH is None:
+		is_test = False
+		command_stream = CommandStreamReader(sys.stdin)
+		print 'Reading commands from stdin'
+	else:
+		is_test = True
+		command_stream = TestFile(args.TEST_FILE_PATH)
+		print 'Reading commands from test file {}:'.format(args.TEST_FILE_PATH)
+		with open(args.TEST_FILE_PATH, 'r') as test_file:
+			print test_file.read()
+
+	try:
+		os.makedirs(data_dir)
+		transaction_manager = run_database(data_dir, command_stream)
+
+		if is_test is True:
+			# Check assertions.
+			commit_abort_log = transaction_manager.get_commit_abort_log()
+			command_stream.assert_debug_commands(commit_abort_log)
+
+	finally:
+		cleanup_dir(data_dir)
+
+if __name__ == '__main__':
+	main()
+

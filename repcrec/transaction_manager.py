@@ -64,7 +64,7 @@ class TransactionManager(object):
 					't{},'.format(self._tick),
 					'--', msg)
 
-	def _begin(self, cmd, args):
+	def _begin(self, cmd, args, is_ro=False):
 		''' Begin a transaction. This command does not block. '''
 
 		check_args_len(cmd, args, 1)
@@ -75,8 +75,17 @@ class TransactionManager(object):
 			raise ValueError(cmd_error(cmd, args,
 				'Cannot begin T{}; already started'.format(txid)))
 		else:
-			self._open_tx[txid] = TxRecord(txid, self._tick)
-			self._log_at_time(txid, 'started')
+			if is_ro is False:
+				self._open_tx[txid] = TxRecord(txid, self._tick, self._sites)
+				self._log_at_time(txid, 'started')
+			else:
+				self._open_tx[txid] = TxRecord(txid, self._tick,
+						[site.multiversion_clone() for site in self._sites])
+				self._log_at_time(txid, 'started (read-only)')
+
+	def _beginro(self, cmd, args):
+		''' Begin a read-only transaction. This command does not block. '''
+		self._begin(cmd, args, is_ro=True)
 
 	def _append_end(self, cmd, args):
 		''' Receive the command to end a transaction. '''
@@ -101,27 +110,32 @@ class TransactionManager(object):
 		the transaction.
 		'''
 
-		# TODO: read-only transactions do not need to abort.
-
 		del self._open_tx[transaction.txid]
 
 		abort = lambda site: site.abort(transaction.txid)
 		commit = lambda site: site.commit(transaction.txid)
 
+		# Extract (site, accessed_at_tick) tuple from site.
+		site_accessed_tuple = lambda site: \
+				(site, transaction.site_accessed_at(site.index))
+
 		if transaction.alive is True:
 			# Check that all sites are up since the transaction started.
 			action = commit
-			for site in it.ifilter(
-					lambda site: site.index in transaction.sites_accessed,
-					self._sites):
-				# Abort if any site accessed went down before now.
-				if site.up_since > transaction.start_time:
+			for site, accessed_at_tick in it.ifilter(
+					lambda (_, tick): tick is not None,
+					it.imap(site_accessed_tuple, transaction.sites)):
+				# Abort if any site went down since the first access.
+				if site.up_since > accessed_at_tick:
+					self._log_at_time(transaction.txid,
+							('aborting; site {} went down '
+								'after first access').format(site.index))
 					action = abort
 					break
 		else:
 			action = abort
 
-		for site in self._sites:
+		for site in transaction.sites:
 			action(site)
 
 		self._log_at_time(transaction.txid,
@@ -149,7 +163,7 @@ class TransactionManager(object):
 		variable = parse_variable(cmd, args, 1)
 		if variable not in self._variables:
 			raise ValueError(cmd_error(cmd, args,
-				'Variable {} is not in the database'.format(txid)))
+				'Variable {} is not in the database'.format(variable)))
 
 		transaction.append_pending(cmd, args,
 				self._runner(self._read, (transaction, variable)))
@@ -169,7 +183,7 @@ class TransactionManager(object):
 		# Locate an eligible site to read.
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
 		responses = 0
-		for site in self._sites:
+		for site in transaction.sites:
 			read_status = site.try_read(transaction.txid, variable)
 
 			# Ignore sites that don't manage the variable.
@@ -178,6 +192,7 @@ class TransactionManager(object):
 			responses += 1
 
 			if read_status.success is True:
+				transaction.mark_site_accessed(site.index, self._tick)
 				self._log_at_time(transaction.txid,
 						'read x{} -> {} from site {}'.format(
 							variable, read_status.value, site.index))
@@ -239,7 +254,7 @@ class TransactionManager(object):
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
 		sites_written = set()
 		blocked = False
-		for site in self._sites:
+		for site in transaction.sites:
 			write_status = site.try_write(transaction.txid, variable, value)
 
 			# Ignore sites that don't manage the variable.
@@ -247,7 +262,7 @@ class TransactionManager(object):
 				continue
 
 			if write_status.success is True:
-				transaction.mark_site_accessed(site.index)
+				transaction.mark_site_accessed(site.index, self._tick)
 				sites_written.add(site.index)
 			else:
 				blocked = True
@@ -347,6 +362,7 @@ class TransactionManager(object):
 	# Map of command names to their function delegates.
 	_COMMAND_DELEGATORS = {
 			'begin': delegator('_begin'),
+			'beginro': delegator('_beginro'),
 			'end': delegator('_append_end'),
 			'r': delegator('_append_read'),
 			'w': delegator('_append_write'),

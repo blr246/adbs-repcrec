@@ -17,7 +17,6 @@ class WaitDie(object):
 	def append_blockers(self, waits_for):
 		''' Append blockers to this transaction. '''
 
-		print 'waits_for:', waits_for
 		oldest_waits_for, txid = min(it.imap(
 			lambda txid: (self._open_tx[txid].start_time, txid), waits_for))
 		if oldest_waits_for < self._oldest_blocker:
@@ -42,13 +41,15 @@ class WaitDie(object):
 class TxRecord(object):
 	''' Record tracking an in-progress transaction. '''
 
-	def __init__(self, txid, start_time):
+	def __init__(self, txid, start_time, sites): #, read_only):
 		self._txid = txid
 		self._start_time = start_time
-		self._sites_accessed = set()
+		self._sites_accessed = dict()
 		self._alive = True
 		self._pending_commands = []
 		self._ended = False
+		self._sites = sites
+		#self._read_only = read_only
 
 	@property
 	def txid(self):
@@ -61,9 +62,14 @@ class TxRecord(object):
 		return self._start_time
 
 	@property
-	def sites_accessed(self):
-		''' Get sites accessed by transaction. '''
-		return self._sites_accessed
+	def sites(self):
+		''' Get sites for this transaction. '''
+		return self._sites
+
+	#@property
+	#def read_only(self):
+	#	''' Check whether transaction is read-only. '''
+	#	return self._read_only
 
 	@property
 	def alive(self):
@@ -79,6 +85,13 @@ class TxRecord(object):
 	def pending(self):
 		''' Check if there are pending commands. '''
 		return len(self._pending_commands) is not 0
+
+	def site_accessed_at(self, index):
+		''' Return time of first site access or None if never accessed. '''
+		if index in self._sites_accessed:
+			return self._sites_accessed[index]
+		else:
+			return None
 
 	def die(self):
 		''' Mark that the transaction dead. '''
@@ -104,9 +117,10 @@ class TxRecord(object):
 		''' Append a pending command. '''
 		self._pending_commands.append(((cmd, args), runner))
 
-	def mark_site_accessed(self, site):
+	def mark_site_accessed(self, index, tick):
 		''' Mark that transaction accessed a site. '''
-		self._sites_accessed.add(site)
+		if index not in self._sites_accessed:
+			self._sites_accessed[index] = tick
 
 
 class OperationStatus(object):

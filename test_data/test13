@@ -1,0 +1,9 @@
+// Test that when all sites fail for reading, the reader will block.
+begin(T1)
+fail(2)
+R(T1, x1)
+recover(2)
+end(T1)
+dump()
+---
+assertCommitted(T1)

@@ -1,0 +1,21 @@
+// Test that younger transactions abort rather than wait for older ones.
+begin(T1)
+begin(T2)
+begin(T3)
+begin(T4)     // Oldest to youngest.
+W(T2, x1, 15)
+R(T1, x1)     // T1 older waits for T2 younger.
+R(T2, x6)
+W(T3, x6, 22) // T3 younger dies since T2 is older.
+W(T4, x8, 12)
+R(T1, x8)     // T1 older waits for T4 younger.
+R(T2, x8)     // T2 older waits for T4 younger.
+R(T4, x1)     // T4 younger does since T2 is older.
+end(T1)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertAborted(T3)
+assertAborted(T4)

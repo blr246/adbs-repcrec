@@ -8,3 +8,6 @@ W(T1,x2,102); R(T2,x1)
 end(T1)
 end(T2)
 dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)

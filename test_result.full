@@ -1,0 +1,912 @@
+************************************************************
+******************** Running ./test_data/test00
+RepCRec starting with data directory /tmp/test_11173
+Reading commands from test file ./test_data/test00:
+// Ensure that all variables exist.
+begin(T1)
+W(T1, x1, 0); W(T1, x2, 0); W(T1, x3, 0); W(T1, x4, 0); W(T1, x5, 0)
+W(T1, x6, 0); W(T1, x7, 0); W(T1, x8, 0); W(T1, x9, 0); W(T1, x10, 0)
+W(T1, x11, 0); W(T1, x12, 0); W(T1, x13, 0); W(T1, x14, 0); W(T1, x15, 0)
+W(T1, x16, 0); W(T1, x17, 0); W(T1, x18, 0); W(T1, x19, 0); W(T1, x20, 0)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('W', ('T1', 'x1', '0')), ('W', ('T1', 'x2', '0')), ('W', ('T1', 'x3', '0')), ('W', ('T1', 'x4', '0')), ('W', ('T1', 'x5', '0'))]
+t2,    T1 : write x1 <- 0 to sites {2}
+t2,    T1 : write x2 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t2,    T1 : write x3 <- 0 to sites {4}
+t2,    T1 : write x4 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t2,    T1 : write x5 <- 0 to sites {6}
+t3,    -- : sending commands [('W', ('T1', 'x6', '0')), ('W', ('T1', 'x7', '0')), ('W', ('T1', 'x8', '0')), ('W', ('T1', 'x9', '0')), ('W', ('T1', 'x10', '0'))]
+t3,    T1 : write x6 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t3,    T1 : write x7 <- 0 to sites {8}
+t3,    T1 : write x8 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t3,    T1 : write x9 <- 0 to sites {10}
+t3,    T1 : write x10 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    -- : sending commands [('W', ('T1', 'x11', '0')), ('W', ('T1', 'x12', '0')), ('W', ('T1', 'x13', '0')), ('W', ('T1', 'x14', '0')), ('W', ('T1', 'x15', '0'))]
+t4,    T1 : write x11 <- 0 to sites {2}
+t4,    T1 : write x12 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    T1 : write x13 <- 0 to sites {4}
+t4,    T1 : write x14 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    T1 : write x15 <- 0 to sites {6}
+t5,    -- : sending commands [('W', ('T1', 'x16', '0')), ('W', ('T1', 'x17', '0')), ('W', ('T1', 'x18', '0')), ('W', ('T1', 'x19', '0')), ('W', ('T1', 'x20', '0'))]
+t5,    T1 : write x16 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T1 : write x17 <- 0 to sites {8}
+t5,    T1 : write x18 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T1 : write x19 <- 0 to sites {10}
+t5,    T1 : write x20 <- 0 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t6,    -- : sending commands [('end', ('T1',))]
+t6,    T1 : committed
+t7,    -- : sending commands [('dump', ())]
+t7,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0
+ S2:   0   0   -   0   -   0   -   0   -   0   0   0   -   0   -   0   -   0   -   0
+ S3:   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0
+ S4:   -   0   0   0   -   0   -   0   -   0   -   0   0   0   -   0   -   0   -   0
+ S5:   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0
+ S6:   -   0   -   0   0   0   -   0   -   0   -   0   -   0   0   0   -   0   -   0
+ S7:   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0
+ S8:   -   0   -   0   -   0   0   0   -   0   -   0   -   0   -   0   0   0   -   0
+ S9:   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0   -   0
+S10:   -   0   -   0   -   0   -   0   0   0   -   0   -   0   -   0   -   0   0   0
+
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test00
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test01
+RepCRec starting with data directory /tmp/test_1230
+Reading commands from test file ./test_data/test01:
+// Test 1.
+// T2 should abort, T1 should not, because of wait-die
+// Younger T2 aborts.
+begin(T1)
+begin(T2)
+W(T1,x1,101); W(T2,x2,202)
+W(T1,x2,102); W(T2,x1,201)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+assertAborted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('W', ('T1', 'x1', '101')), ('W', ('T2', 'x2', '202'))]
+t3,    T1 : write x1 <- 101 to sites {2}
+t3,    T2 : write x2 <- 202 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    -- : sending commands [('W', ('T1', 'x2', '102')), ('W', ('T2', 'x1', '201'))]
+t4,    T1 : blocked by T2 writing x2
+t4,    T2 : killing by wait-die
+t4,    T2 : aborted
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : write x2 <- 102 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T1 : committed
+t6,    -- : sending commands [('dump', ())]
+t6,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2: 101 102   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   - 102  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   - 102   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   - 102   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   - 102   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting ABORTED for T2
+******************** Completed ./test_data/test01
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test02
+RepCRec starting with data directory /tmp/test_22420
+Reading commands from test file ./test_data/test02:
+// Test 2
+// No aborts happens, since read-only transactions use
+// multiversion read protocol.
+begin(T1)
+beginRO(T2)
+W(T1,x1,101); R(T2,x2)
+W(T1,x2,102); R(T2,x1)
+end(T1)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('beginRO', ('T2',))]
+t2,    T2 : started (read-only)
+t3,    -- : sending commands [('W', ('T1', 'x1', '101')), ('R', ('T2', 'x2'))]
+t3,    T1 : write x1 <- 101 to sites {2}
+t3,    T2 : read x2 -> 20 from site 1
+t4,    -- : sending commands [('W', ('T1', 'x2', '102')), ('R', ('T2', 'x1'))]
+t4,    T1 : write x2 <- 102 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    T2 : read x1 -> 10 from site 2
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : committed
+t6,    -- : sending commands [('end', ('T2',))]
+t6,    T2 : committed
+t7,    -- : sending commands [('dump', ())]
+t7,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2: 101 102   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   - 102  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   - 102   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   - 102   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   - 102   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   - 102   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test02
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test03
+RepCRec starting with data directory /tmp/test_29479
+Reading commands from test file ./test_data/test03:
+// Test 3
+// T1 should not abort because its site did not fail.
+// In fact all transactions commit
+begin(T1)
+begin(T2)
+R(T1,x3)
+fail(2)
+W(T2,x8,88); R(T2,x3)
+W(T1, x5,91)
+end(T2)
+recover(2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('R', ('T1', 'x3'))]
+t3,    T1 : read x3 -> 30 from site 4
+t4,    -- : sending commands [('fail', ('2',))]
+t4,    -- : site 2 is down
+t5,    -- : sending commands [('W', ('T2', 'x8', '88')), ('R', ('T2', 'x3'))]
+t5,    T2 : write x8 <- 88 to sites {1, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T2 : read x3 -> 30 from site 4
+t6,    -- : sending commands [('W', ('T1', 'x5', '91'))]
+t6,    T1 : write x5 <- 91 to sites {6}
+t7,    -- : sending commands [('end', ('T2',))]
+t7,    T2 : committed
+t8,    -- : sending commands [('recover', ('2',))]
+t8,    -- : site 2 is up
+t9,    -- : sending commands [('end', ('T1',))]
+t9,    T1 : committed
+t10,   -- : sending commands [('dump', ())]
+t10,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  88   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  91  60   -  88   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  88   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  88  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test03
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test04
+RepCRec starting with data directory /tmp/test_14287
+Reading commands from test file ./test_data/test04:
+// Test 4
+// Now T1 aborts, since site 2 died after T1 accessed it. T2 ok.
+begin(T1)
+begin(T2)
+R(T1,x1)
+fail(2)
+W(T2,x8,88); R(T2,x3)
+R(T1, x5)
+end(T2)
+recover(2)
+end(T1)
+dump()
+---
+assertAborted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('R', ('T1', 'x1'))]
+t3,    T1 : read x1 -> 10 from site 2
+t4,    -- : sending commands [('fail', ('2',))]
+t4,    -- : site 2 is down
+t5,    -- : sending commands [('W', ('T2', 'x8', '88')), ('R', ('T2', 'x3'))]
+t5,    T2 : write x8 <- 88 to sites {1, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T2 : read x3 -> 30 from site 4
+t6,    -- : sending commands [('R', ('T1', 'x5'))]
+t6,    T1 : read x5 -> 50 from site 6
+t7,    -- : sending commands [('end', ('T2',))]
+t7,    T2 : committed
+t8,    -- : sending commands [('recover', ('2',))]
+t8,    -- : site 2 is up
+t9,    -- : sending commands [('end', ('T1',))]
+t9,    T1 : aborting; site 2 went down after first access
+t9,    T1 : aborted
+t10,   -- : sending commands [('dump', ())]
+t10,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  88   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  88   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  88   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  88  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test04
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test05
+RepCRec starting with data directory /tmp/test_14198
+Reading commands from test file ./test_data/test05:
+// Test 5
+// T1 fails again here because it wrote to a site that failed. T2 ok.
+begin(T1)
+begin(T2)
+W(T1,x6,66)
+fail(2)
+W(T2,x8,88); R(T2,x3)
+R(T1, x5)
+end(T2)
+recover(2)
+end(T1)
+dump()
+---
+assertAborted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('W', ('T1', 'x6', '66'))]
+t3,    T1 : write x6 <- 66 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    -- : sending commands [('fail', ('2',))]
+t4,    -- : site 2 is down
+t5,    -- : sending commands [('W', ('T2', 'x8', '88')), ('R', ('T2', 'x3'))]
+t5,    T2 : write x8 <- 88 to sites {1, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    T2 : read x3 -> 30 from site 4
+t6,    -- : sending commands [('R', ('T1', 'x5'))]
+t6,    T1 : read x5 -> 50 from site 6
+t7,    -- : sending commands [('end', ('T2',))]
+t7,    T2 : committed
+t8,    -- : sending commands [('recover', ('2',))]
+t8,    -- : site 2 is up
+t9,    -- : sending commands [('end', ('T1',))]
+t9,    T1 : aborting; site 2 went down after first access
+t9,    T1 : aborted
+t10,   -- : sending commands [('dump', ())]
+t10,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  88   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  88   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  88   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  88  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test05
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test06
+RepCRec starting with data directory /tmp/test_22430
+Reading commands from test file ./test_data/test06:
+// Test 6
+// T1 ok. T2 ok. T2 reads from a recovering site, but odd variables only
+// at that site
+begin(T1)
+begin(T2)
+fail(3); fail(4)
+R(T1,x1)
+W(T2,x8,88)
+end(T1)
+recover(4); recover(3)
+R(T2,x3)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('fail', ('3',)), ('fail', ('4',))]
+t3,    -- : site 3 is down
+t3,    -- : site 4 is down
+t4,    -- : sending commands [('R', ('T1', 'x1'))]
+t4,    T1 : read x1 -> 10 from site 2
+t5,    -- : sending commands [('W', ('T2', 'x8', '88'))]
+t5,    T2 : write x8 <- 88 to sites {1, 2, 5, 6, 7, 8, 9, 10}
+t6,    -- : sending commands [('end', ('T1',))]
+t6,    T1 : committed
+t7,    -- : sending commands [('recover', ('4',)), ('recover', ('3',))]
+t7,    -- : site 4 is up
+t7,    -- : site 3 is up
+t8,    -- : sending commands [('R', ('T2', 'x3'))]
+t8,    T2 : read x3 -> 30 from site 4
+t9,    -- : sending commands [('end', ('T2',))]
+t9,    T2 : committed
+t10,   -- : sending commands [('dump', ())]
+t10,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  88   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  88   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  88   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  88   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  88  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test06
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test07
+RepCRec starting with data directory /tmp/test_30313
+Reading commands from test file ./test_data/test07:
+// Test 7
+// T2 should read the initial version of x3 based on multiversion read
+// consistency.
+begin(T1)
+beginRO(T2)
+R(T2,x1)
+R(T2,x2)
+W(T1,x3,33)
+end(T1)
+R(T2,x3)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('beginRO', ('T2',))]
+t2,    T2 : started (read-only)
+t3,    -- : sending commands [('R', ('T2', 'x1'))]
+t3,    T2 : read x1 -> 10 from site 2
+t4,    -- : sending commands [('R', ('T2', 'x2'))]
+t4,    T2 : read x2 -> 20 from site 1
+t5,    -- : sending commands [('W', ('T1', 'x3', '33'))]
+t5,    T1 : write x3 <- 33 to sites {4}
+t6,    -- : sending commands [('end', ('T1',))]
+t6,    T1 : committed
+t7,    -- : sending commands [('R', ('T2', 'x3'))]
+t7,    T2 : read x3 -> 30 from site 4
+t8,    -- : sending commands [('end', ('T2',))]
+t8,    T2 : committed
+t9,    -- : sending commands [('dump', ())]
+t9,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  33  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test07
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test08
+RepCRec starting with data directory /tmp/test_2669
+Reading commands from test file ./test_data/test08:
+// Test 8
+// T2 still reads the initial value of x3
+// T3 still reads the value of x3 written by T1
+begin(T1)
+beginRO(T2)
+R(T2,x1)
+R(T2,x2)
+W(T1,x3,33)
+end(T1)
+beginRO(T3)
+R(T3,x3)
+R(T2,x3)
+end(T2)
+end(T3)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertCommitted(T3)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('beginRO', ('T2',))]
+t2,    T2 : started (read-only)
+t3,    -- : sending commands [('R', ('T2', 'x1'))]
+t3,    T2 : read x1 -> 10 from site 2
+t4,    -- : sending commands [('R', ('T2', 'x2'))]
+t4,    T2 : read x2 -> 20 from site 1
+t5,    -- : sending commands [('W', ('T1', 'x3', '33'))]
+t5,    T1 : write x3 <- 33 to sites {4}
+t6,    -- : sending commands [('end', ('T1',))]
+t6,    T1 : committed
+t7,    -- : sending commands [('beginRO', ('T3',))]
+t7,    T3 : started (read-only)
+t8,    -- : sending commands [('R', ('T3', 'x3'))]
+t8,    T3 : read x3 -> 33 from site 4
+t9,    -- : sending commands [('R', ('T2', 'x3'))]
+t9,    T2 : read x3 -> 30 from site 4
+t10,   -- : sending commands [('end', ('T2',))]
+t10,   T2 : committed
+t11,   -- : sending commands [('end', ('T3',))]
+t11,   T3 : committed
+t12,   -- : sending commands [('dump', ())]
+t12,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  33  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test08
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test09
+RepCRec starting with data directory /tmp/test_27624
+Reading commands from test file ./test_data/test09:
+// Test 9
+// T1, T2, T3 ok. T3 should wait because older
+begin(T3)
+begin(T1)
+begin(T2)
+W(T3,x2,22)
+W(T2,x4,44)
+R(T3,x4)
+end(T2)
+end(T3)
+R(T1,x2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertCommitted(T3)
+
+t1,    -- : sending commands [('begin', ('T3',))]
+t1,    T3 : started
+t2,    -- : sending commands [('begin', ('T1',))]
+t2,    T1 : started
+t3,    -- : sending commands [('begin', ('T2',))]
+t3,    T2 : started
+t4,    -- : sending commands [('W', ('T3', 'x2', '22'))]
+t4,    T3 : write x2 <- 22 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    -- : sending commands [('W', ('T2', 'x4', '44'))]
+t5,    T2 : write x4 <- 44 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t6,    -- : sending commands [('R', ('T3', 'x4'))]
+t6,    T3 : blocked by T2 reading x4
+t7,    -- : sending commands [('end', ('T2',))]
+t7,    T2 : committed
+t7,    T3 : read x4 -> 44 from site 1
+t8,    -- : sending commands [('end', ('T3',))]
+t8,    T3 : committed
+t9,    -- : sending commands [('R', ('T1', 'x2'))]
+t9,    T1 : read x2 -> 22 from site 1
+t10,   -- : sending commands [('end', ('T1',))]
+t10,   T1 : committed
+t11,   -- : sending commands [('dump', ())]
+t11,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  22   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  22   -  44   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  22   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  22  30  44   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  22   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  22   -  44  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  22   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  22   -  44   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  22   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  22   -  44   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test09
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test10
+RepCRec starting with data directory /tmp/test_25130
+Reading commands from test file ./test_data/test10:
+// Test 10
+// T3 should not wait and should abort
+begin(T1)
+begin(T2)
+begin(T3)
+W(T3,x2,22)
+W(T2,x4,44)
+R(T3,x4)
+end(T2)
+R(T1,x2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertAborted(T3)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('begin', ('T3',))]
+t3,    T3 : started
+t4,    -- : sending commands [('W', ('T3', 'x2', '22'))]
+t4,    T3 : write x2 <- 22 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t5,    -- : sending commands [('W', ('T2', 'x4', '44'))]
+t5,    T2 : write x4 <- 44 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t6,    -- : sending commands [('R', ('T3', 'x4'))]
+t6,    T3 : killing by wait-die
+t6,    T3 : aborted
+t7,    -- : sending commands [('end', ('T2',))]
+t7,    T2 : committed
+t8,    -- : sending commands [('R', ('T1', 'x2'))]
+t8,    T1 : read x2 -> 20 from site 1
+t9,    -- : sending commands [('end', ('T1',))]
+t9,    T1 : committed
+t10,   -- : sending commands [('dump', ())]
+t10,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  44   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  44   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  44  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  44   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  44   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  44   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting ABORTED for T3
+******************** Completed ./test_data/test10
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test11
+RepCRec starting with data directory /tmp/test_10511
+Reading commands from test file ./test_data/test11:
+// Test that younger transactions abort rather than wait for older ones.
+begin(T1)
+begin(T2)
+begin(T3)
+begin(T4)     // Oldest to youngest.
+W(T2, x1, 15)
+R(T1, x1)     // T1 older waits for T2 younger.
+R(T2, x6)
+W(T3, x6, 22) // T3 younger dies since T2 is older.
+W(T4, x8, 12)
+R(T1, x8)     // T1 older waits for T4 younger.
+R(T2, x8)     // T2 older waits for T4 younger.
+R(T4, x1)     // T4 younger does since T2 is older.
+end(T1)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertAborted(T3)
+assertAborted(T4)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('begin', ('T3',))]
+t3,    T3 : started
+t4,    -- : sending commands [('begin', ('T4',))]
+t4,    T4 : started
+t5,    -- : sending commands [('W', ('T2', 'x1', '15'))]
+t5,    T2 : write x1 <- 15 to sites {2}
+t6,    -- : sending commands [('R', ('T1', 'x1'))]
+t6,    T1 : blocked by T2 reading x1
+t7,    -- : sending commands [('R', ('T2', 'x6'))]
+t7,    T1 : blocked by T2 reading x1
+t7,    T2 : read x6 -> 60 from site 1
+t8,    -- : sending commands [('W', ('T3', 'x6', '22'))]
+t8,    T1 : blocked by T2 reading x1
+t8,    T3 : killing by wait-die
+t8,    T3 : aborted
+t9,    -- : sending commands [('W', ('T4', 'x8', '12'))]
+t9,    T1 : blocked by T2 reading x1
+t9,    T4 : write x8 <- 12 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t10,   -- : sending commands [('R', ('T1', 'x8'))]
+t10,   T1 : blocked by T2 reading x1
+t11,   -- : sending commands [('R', ('T2', 'x8'))]
+t11,   T1 : blocked by T2 reading x1
+t11,   T2 : blocked by T4 reading x8
+t12,   -- : sending commands [('R', ('T4', 'x1'))]
+t12,   T1 : blocked by T2 reading x1
+t12,   T2 : blocked by T4 reading x8
+t12,   T4 : killing by wait-die
+t12,   T4 : aborted
+t13,   -- : sending commands [('end', ('T1',))]
+t13,   T1 : blocked by T2 reading x1
+t13,   T2 : read x8 -> 80 from site 1
+t14,   -- : sending commands [('end', ('T2',))]
+t14,   T1 : blocked by T2 reading x1
+t14,   T2 : committed
+t15,   -- : sending commands [('dump', ())]
+t15,   -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  15  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+t15,   T1 : read x1 -> 15 from site 2
+t15,   T1 : read x8 -> 80 from site 1
+t15,   T1 : committed
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting ABORTED for T3
+debug SUCCESS : expecting ABORTED for T4
+******************** Completed ./test_data/test11
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test12
+RepCRec starting with data directory /tmp/test_24631
+Reading commands from test file ./test_data/test12:
+// Make sure that when all sites are locked a transaction will block.
+begin(T1)
+begin(T2)
+W(T2, x2, 8) // x2 is now locked everywhere
+W(T1, x2, 6) // T1 should block
+end(T1)
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('W', ('T2', 'x2', '8'))]
+t3,    T2 : write x2 <- 8 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t4,    -- : sending commands [('W', ('T1', 'x2', '6'))]
+t4,    T1 : blocked by T2 writing x2
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : blocked by T2 writing x2
+t6,    -- : sending commands [('end', ('T2',))]
+t6,    T1 : blocked by T2 writing x2
+t6,    T2 : committed
+t7,    -- : sending commands [('dump', ())]
+t7,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -   8   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10   8   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -   8   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -   8  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -   8   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -   8   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -   8   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -   8   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -   8   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -   8   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+t7,    T1 : write x2 <- 6 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+t7,    T1 : committed
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test12
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test13
+RepCRec starting with data directory /tmp/test_24487
+Reading commands from test file ./test_data/test13:
+// Test that when all sites fail for reading, the reader will block.
+begin(T1)
+fail(2)
+R(T1, x1)
+recover(2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('fail', ('2',))]
+t2,    -- : site 2 is down
+t3,    -- : sending commands [('R', ('T1', 'x1'))]
+t3,    T1 : waiting to read x1; no available sites
+t4,    -- : sending commands [('recover', ('2',))]
+t4,    -- : site 2 is up
+t4,    T1 : read x1 -> 10 from site 2
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : committed
+t6,    -- : sending commands [('dump', ())]
+t6,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test13
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test14
+RepCRec starting with data directory /tmp/test_23982
+Reading commands from test file ./test_data/test14:
+// Test that sites can go down before they are written.
+begin(T1)
+R(T1, x1)
+fail(1)
+recover(1)
+W(T1, x1, 22)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('R', ('T1', 'x1'))]
+t2,    T1 : read x1 -> 10 from site 2
+t3,    -- : sending commands [('fail', ('1',))]
+t3,    -- : site 1 is down
+t4,    -- : sending commands [('recover', ('1',))]
+t4,    -- : site 1 is up
+t5,    -- : sending commands [('W', ('T1', 'x1', '22'))]
+t5,    T1 : write x1 <- 22 to sites {2}
+t6,    -- : sending commands [('end', ('T1',))]
+t6,    T1 : committed
+t7,    -- : sending commands [('dump', ())]
+t7,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  22  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test14
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test15
+RepCRec starting with data directory /tmp/test_13073
+Reading commands from test file ./test_data/test15:
+// Test that RO transactions will block when sites are down.
+beginRO(T1)
+fail(2)
+R(T1, x1)
+recover(2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+
+t1,    -- : sending commands [('beginRO', ('T1',))]
+t1,    T1 : started (read-only)
+t2,    -- : sending commands [('fail', ('2',))]
+t2,    -- : site 2 is down
+t3,    -- : sending commands [('R', ('T1', 'x1'))]
+t3,    T1 : waiting to read x1; no available sites
+t4,    -- : sending commands [('recover', ('2',))]
+t4,    -- : site 2 is up
+t4,    T1 : read x1 -> 10 from site 2
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : committed
+t6,    -- : sending commands [('dump', ())]
+t6,    -- : dumping sites
+      x1  x2  x3  x4  x5  x6  x7  x8  x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+ S1:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S2:  10  20   -  40   -  60   -  80   - 100 110 120   - 140   - 160   - 180   - 200
+ S3:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S4:   -  20  30  40   -  60   -  80   - 100   - 120 130 140   - 160   - 180   - 200
+ S5:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S6:   -  20   -  40  50  60   -  80   - 100   - 120   - 140 150 160   - 180   - 200
+ S7:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+ S8:   -  20   -  40   -  60  70  80   - 100   - 120   - 140   - 160 170 180   - 200
+ S9:   -  20   -  40   -  60   -  80   - 100   - 120   - 140   - 160   - 180   - 200
+S10:   -  20   -  40   -  60   -  80  90 100   - 120   - 140   - 160   - 180 190 200
+
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test15
+************************************************************
+

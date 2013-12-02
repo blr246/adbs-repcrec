@@ -1,0 +1,10 @@
+// Ensure that all variables exist.
+begin(T1)
+W(T1, x1, 0); W(T1, x2, 0); W(T1, x3, 0); W(T1, x4, 0); W(T1, x5, 0)
+W(T1, x6, 0); W(T1, x7, 0); W(T1, x8, 0); W(T1, x9, 0); W(T1, x10, 0)
+W(T1, x11, 0); W(T1, x12, 0); W(T1, x13, 0); W(T1, x14, 0); W(T1, x15, 0)
+W(T1, x16, 0); W(T1, x17, 0); W(T1, x18, 0); W(T1, x19, 0); W(T1, x20, 0)
+end(T1)
+dump()
+---
+assertCommitted(T1)

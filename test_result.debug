@@ -1,0 +1,113 @@
+************************************************************
+******************** Running ./test_data/test00
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test00
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test01
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting ABORTED for T2
+******************** Completed ./test_data/test01
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test02
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test02
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test03
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test03
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test04
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test04
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test05
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test05
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test06
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test06
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test07
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test07
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test08
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test08
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test09
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test09
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test10
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting ABORTED for T3
+******************** Completed ./test_data/test10
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test11
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting ABORTED for T3
+debug SUCCESS : expecting ABORTED for T4
+******************** Completed ./test_data/test11
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test12
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test12
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test13
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test13
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test14
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test14
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test15
+debug SUCCESS : expecting COMMITTED for T1
+******************** Completed ./test_data/test15
+************************************************************
+

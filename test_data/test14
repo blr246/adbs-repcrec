@@ -1,0 +1,10 @@
+// Test that sites can go down before they are written.
+begin(T1)
+R(T1, x1)
+fail(1)
+recover(1)
+W(T1, x1, 22)
+end(T1)
+dump()
+---
+assertCommitted(T1)

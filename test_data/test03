@@ -10,6 +10,7 @@ W(T1, x5,91)
 end(T2)
 recover(2)
 end(T1)
+dump()
 ---
 assertCommitted(T1)
 assertCommitted(T2)

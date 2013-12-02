@@ -1,0 +1,9 @@
+// Test that RO transactions will block when sites are down.
+beginRO(T1)
+fail(2)
+R(T1, x1)
+recover(2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
