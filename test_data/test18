@@ -1,0 +1,15 @@
+// Ensure that pending FIFO works.
+begin(T1)
+begin(T2)
+begin(T3)
+R(T3, x1)
+W(T2,x1,100) // Write for T2 comes first or else T1 aborts by wait-die
+W(T1,x1,200)
+end(T3)
+end(T2)
+end(T1)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertCommitted(T3)

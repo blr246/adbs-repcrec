@@ -128,3 +128,11 @@ debug SUCCESS : expecting COMMITTED for T3
 ******************** Completed ./test_data/test17
 ************************************************************
 
+************************************************************
+******************** Running ./test_data/test18
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test18
+************************************************************
+

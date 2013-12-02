@@ -33,6 +33,7 @@ class TransactionManager(object):
 
 		# Track open transactions, timing, and log commits and aborts.
 		self._open_tx = dict()
+		self._tx_fifo = []
 		self._commit_abort_log = []
 		self._tick = 0
 
@@ -115,6 +116,8 @@ class TransactionManager(object):
 		transaction.end()
 		transaction.append_pending(cmd, args,
 				self._runner(self._end, (transaction,)))
+		if transaction not in self._tx_fifo:
+			self._tx_fifo.append(transaction)
 
 	def _end(self, transaction):
 		'''
@@ -197,6 +200,8 @@ class TransactionManager(object):
 
 		transaction.append_pending(cmd, args,
 				self._runner(self._read, (transaction, variable)))
+		if transaction not in self._tx_fifo:
+			self._tx_fifo.append(transaction)
 
 	def _read(self, transaction, variable):
 		'''
@@ -307,6 +312,8 @@ class TransactionManager(object):
 
 		transaction.append_pending(cmd, args,
 				self._runner(self._write, (transaction, variable, value)))
+		if transaction not in self._tx_fifo:
+			self._tx_fifo.append(transaction)
 
 	def _write(self, transaction, variable, value):
 		'''
@@ -511,8 +518,10 @@ class TransactionManager(object):
 					.format(format_command(cmd, args)))
 
 		# Try to run all pending commands until there is no more progress.
-		for transaction in self._open_tx.values():
+		for transaction in self._tx_fifo:
 			self._run_pending(transaction)
+		# Remove transactions no longer pending.
+		self._tx_fifo = [tx for tx in self._tx_fifo if tx.pending()]
 
 	def get_commit_abort_log(self):
 		'''
