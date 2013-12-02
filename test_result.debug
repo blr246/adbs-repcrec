@@ -111,3 +111,20 @@ debug SUCCESS : expecting COMMITTED for T1
 ******************** Completed ./test_data/test15
 ************************************************************
 
+************************************************************
+******************** Running ./test_data/test16
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting ABORTED for T2
+debug SUCCESS : expecting ABORTED for T3
+debug SUCCESS : expecting COMMITTED for T4
+******************** Completed ./test_data/test16
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test17
+debug SUCCESS : expecting COMMITTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting COMMITTED for T3
+******************** Completed ./test_data/test17
+************************************************************
+

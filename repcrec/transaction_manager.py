@@ -134,7 +134,7 @@ class TransactionManager(object):
 			action = commit
 
 			# Read-only transactions can skip the site accessed checks.
-			if transaction.is_read_only():
+			if not transaction.is_read_only():
 
 				# Extract (site, accessed_at_tick) tuple from site.
 				site_accessed_tuple = lambda site: \
@@ -224,9 +224,12 @@ class TransactionManager(object):
 
 				elif read_status.success is True:
 					transaction.mark_site_accessed(site.index, self._tick)
-					self._log_at_time(transaction.txid,
-							'read x{} -> {} from site {}'.format(
-								variable, read_status.value, site.index))
+					msg = 'read x{} -> {} from site {}'.format(
+							variable, read_status.value, site.index)
+					if transaction.is_read_only():
+						msg += ' multiversion clone at time {}'.format(
+								transaction.tick)
+					self._log_at_time(transaction.txid, msg)
 					return True
 
 				else:
@@ -421,9 +424,36 @@ class TransactionManager(object):
 
 	def _dump(self, cmd, args):
 		''' Dump database state. '''
-		check_args_len(cmd, args, 0)
-		self._log_at_time(None, 'dumping sites')
-		print self
+
+		if len(args) is 0:
+			self._log_at_time(None, 'dumping all sites')
+			print self.to_string(None)
+
+		elif len(args) is 1:
+			check_args_len(cmd, args, 1)
+
+			is_site = False
+
+			# Parse the partition if it is specified.
+			if len(args[0]) is 0:
+				raise ValueError(cmd_error(cmd, args,
+					'Argument must match either [0-9]+ or x[0-9]+'))
+
+			try:
+				if args[0][0] == 'x':
+					partition = int(args[0][1:])
+					self._log_at_time(None,
+							'dumping variable x{}'.format(partition))
+				else:
+					is_site = True
+					partition = int(args[0])
+					self._log_at_time(None,
+							'dumping site S{}'.format(partition))
+			except ValueError:
+				raise ValueError(cmd_error(cmd, args,
+					'Argument must match either [0-9]+ or x[0-9]+'))
+
+			print self.to_string(partition, is_site)
 
 	@staticmethod
 	def _run_pending(transaction):
@@ -494,33 +524,70 @@ class TransactionManager(object):
 		return tuple(self._commit_abort_log)
 
 	# Field width used by __str__() method.
-	_FIELD_WIDTH = 4
+	_FIELD_WIDTH = 5
 
-	def to_string(self, partition):
+	def to_string(self, partition, is_site=False):
 		''' Format as string. Partition can be None, a variable, or a site. '''
 
-		# TODO: use partition
-
-		out = StringIO.StringIO()
-		variable_fmt_str = '{}' + ('{}' * (len(self._variables) - 1))
+		# Either we slice in rows or columns or None depending on the
+		# partition.
+		if partition is None or is_site is True:
+			variable_fmt_str = '{}' + ('{}' * (len(self._variables) - 1))
+			variables = self._variables
+		else:
+			variable_fmt_str = '{}'
+			variables = (partition,)
 		site_line_fmt_str = '{{:>3s}}:{}\n'.format(variable_fmt_str)
 
+		if is_site is not True:
+			sites = self._sites
+		else:
+			sites = (site for site in self._sites if site.index is partition)
+
+		legend = [
+				' x : denotes a variable',
+				' S : denotes a site',
+				' * : denotes that the variable is unavailable for reading',
+				]
+		legend_width = max(len(line) for line in legend)
+		matrix_rule_len = max(
+				legend_width,
+				4 + (len(variables) * self._FIELD_WIDTH))
+
+		matrix_rule = '-' * matrix_rule_len
+		out = StringIO.StringIO()
+		out.write(matrix_rule + '\n')
+
 		out.write('    ')
-		for variable in self._variables:
-			out.write(('{{:>{}}}'.format(self._FIELD_WIDTH))
+		for variable in variables:
+			# Shift left 1 space for the '*' available column.
+			out.write('{{:>{}}} '.format(self._FIELD_WIDTH - 1)
 					.format('x{}'.format(variable)))
 		out.write('\n')
+		out.write('    ')
+		for variable in variables:
+			out.write(('{{:>{}}}'.format(self._FIELD_WIDTH))
+					.format('-' * (self._FIELD_WIDTH - 1)))
+		out.write('\n')
 
-		field_fmt = '{{:{}d}}'.format(self._FIELD_WIDTH)
-		not_present = '{{:>{}}}'.format(self._FIELD_WIDTH).format('-')
-		for site in self._sites:
-			site_dump = site.dump()
-			variable_states = [ field_fmt.format(site_dump[variable])
-					if variable in site_dump else not_present
-					for variable in self._variables]
+		field_fmt = '{{:>{}}}'.format(self._FIELD_WIDTH)
+		#field_fmt = '{{:{}d}}'.format(self._FIELD_WIDTH)
+		not_present = field_fmt.format('- ')
+		for site in sites:
+			values, available = site.dump()
+			variable_states = [
+					field_fmt.format(
+						str(values[variable]) +
+						('*' if not available[variable] else ' '))
+					if variable in values else not_present
+					for variable in variables]
 			out.write(site_line_fmt_str.format(
 				'S{}'.format(site.index), *variable_states))
 
+		out.write(matrix_rule + '\n')
+		for line in legend:
+			out.write(line + '\n')
+		out.write(matrix_rule)
 		out.seek(0)
 		return out.read()
 

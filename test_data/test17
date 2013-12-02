@@ -1,0 +1,25 @@
+// From Chris Keitel's email.
+fail(1); fail(2); fail(3); fail(4); fail(5)
+// 6 stays up
+fail(7); fail(8); fail(9); fail(10)
+dump(x2)
+begin(T1)
+W(T1,x2,21) // Only available site is site 6, so that is the only site written
+end(T1) // T1 commits successfully
+dump(x2) // x2 = 21
+beginRO(T2) // If T2 ever reads x2, it should read x2: 21
+fail(6)
+recover(7) // site 7 doesn't know about the previous write to x2
+dump(7)
+// because x2 is replicated it must wait for a transaction to write x2
+begin(T3)
+W(T3,x2,23) // writes x2.7 because only site 7 is available
+end(T3) // T3 commits successfully
+dump(x2) // x2 = 23
+R(T2,x2) // This should succeed since T2 is RO.
+end(T2)
+dump()
+---
+assertCommitted(T1)
+assertCommitted(T2)
+assertCommitted(T3)

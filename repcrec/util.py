@@ -83,7 +83,7 @@ class TxRecord(object):
 
 	def is_read_only(self):
 		''' Query read-only. '''
-		return self._tick is None
+		return self._tick is not None
 
 	def site_accessed_at(self, index):
 		''' Return time of first site access or None if never accessed. '''

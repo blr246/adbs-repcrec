@@ -51,9 +51,25 @@ class Site(object):
 		return '{{ \'index\': {}, \'data\': {}, \'locks\': {} }}'.format(
 				self._index, self._database_manager, self._lock_manager)
 
-	def dump(self, variable=None):
-		''' Dump committed site data. This is a debug API. '''
-		return self._database_manager.dump(variable)
+	def dump(self):
+		'''
+		Dump committed site data. This is a debug API.
+
+		Returns
+		-------
+		values : dict
+			Map from variable to value.
+		available : dict
+			Map from variable to True if available to read and False otherwise.
+		'''
+
+		available = lambda variable: \
+				variable in self._owned_variables or \
+				variable in self._available_variables
+
+		return self._database_manager.dump(), \
+				dict((variable, available(variable))
+						for variable in self._variables)
 
 	@property
 	def index(self):
