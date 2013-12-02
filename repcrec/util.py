@@ -41,7 +41,7 @@ class WaitDie(object):
 class TxRecord(object):
 	''' Record tracking an in-progress transaction. '''
 
-	def __init__(self, txid, start_time, sites): #, read_only):
+	def __init__(self, txid, start_time, sites, tick):
 		self._txid = txid
 		self._start_time = start_time
 		self._sites_accessed = dict()
@@ -49,7 +49,7 @@ class TxRecord(object):
 		self._pending_commands = []
 		self._ended = False
 		self._sites = sites
-		#self._read_only = read_only
+		self._tick = tick
 
 	@property
 	def txid(self):
@@ -66,10 +66,10 @@ class TxRecord(object):
 		''' Get sites for this transaction. '''
 		return self._sites
 
-	#@property
-	#def read_only(self):
-	#	''' Check whether transaction is read-only. '''
-	#	return self._read_only
+	@property
+	def tick(self):
+		''' The tick for read-only transactions or else None. '''
+		return self._tick
 
 	@property
 	def alive(self):
@@ -81,10 +81,9 @@ class TxRecord(object):
 		''' Check if the transaction is ended. '''
 		return self._ended
 
-	@property
-	def pending(self):
-		''' Check if there are pending commands. '''
-		return len(self._pending_commands) is not 0
+	def is_read_only(self):
+		''' Query read-only. '''
+		return self._tick is None
 
 	def site_accessed_at(self, index):
 		''' Return time of first site access or None if never accessed. '''
@@ -104,6 +103,10 @@ class TxRecord(object):
 					'T{} ended already'.format(self._txid))
 		else:
 			self._ended = False
+
+	def pending(self):
+		''' Check if there are pending commands. '''
+		return len(self._pending_commands) is not 0
 
 	def peek_pending(self):
 		''' Get next pending command. '''

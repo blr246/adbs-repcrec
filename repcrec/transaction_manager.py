@@ -14,7 +14,6 @@ class TransactionManager(object):
 	''' Database command processor. '''
 
 	COMMITTED, ABORTED = range(2)
-
 	def __init__(self, data_file_map, data_path):
 		'''
 		Initialize database with sites.
@@ -22,10 +21,20 @@ class TransactionManager(object):
 		Parameters
 		----------
 		data_file_map : dict
-			Dict of site indices to dict of site variables and default values.
+			Data are a dict of site indices to dict of site variables and
+			default values.
+
+			For instance,
+			    data_file_map={ 1: { 5: 50 } }
+			means that site 1 has variable 5 with default value 50.
 		data_path : string
 			Path to site data.
 		'''
+
+		# Track open transactions, timing, and log commits and aborts.
+		self._open_tx = dict()
+		self._commit_abort_log = []
+		self._tick = 0
 
 		# Discover owned variables by first getting map of { var : [sites] }
 		# and then getting map of { site : [owned vars] }.
@@ -40,21 +49,20 @@ class TransactionManager(object):
 				var_to_site.iteritems(), collections.defaultdict(list))
 
 		# Initialize database sites.
-		self._sites = [Site(index, data, site_owned_vars[index], data_path)
-				for index, data in data_file_map.iteritems()]
+		make_site = lambda index, data: \
+				Site(index, data,
+						site_owned_vars[index], self._tick, data_path)
+		self._sites = [make_site(index, data)
+			for index, data in data_file_map.iteritems()]
 
 		# Get sorted union of variables across all sites.
 		self._variables = sorted(list(set(variable
 				for variable in it.chain(*[data.iterkeys()
 					for data in data_file_map.itervalues()]))))
 
-		# Track open transactions, timing, and log commits and aborts.
-		self._open_tx = dict()
-		self._tick = 0
-		self._commit_abort_log = []
-
 	def _log_at_time(self, txid, msg):
-		''' Log a message with timestamp. '''
+		''' Log a message with timestamp and txid. '''
+
 		if txid is not None:
 			print '{:<4s} {:>4s} : {}'.format(
 					't{},'.format(self._tick),
@@ -70,17 +78,23 @@ class TransactionManager(object):
 		check_args_len(cmd, args, 1)
 
 		txid = parse_txid(cmd, args, 0)
-
 		if txid in self._open_tx:
 			raise ValueError(cmd_error(cmd, args,
 				'Cannot begin T{}; already started'.format(txid)))
 		else:
 			if is_ro is False:
-				self._open_tx[txid] = TxRecord(txid, self._tick, self._sites)
+				self._open_tx[txid] = TxRecord(
+						txid, self._tick, self._sites, None)
 				self._log_at_time(txid, 'started')
+
 			else:
-				self._open_tx[txid] = TxRecord(txid, self._tick,
-						[site.multiversion_clone() for site in self._sites])
+				# Clone all running sites.
+				sites = [site for site in self._sites if site.is_up()]
+				for site in sites:
+					site.multiversion_clone(self._tick)
+				# Add this transaction.
+				self._open_tx[txid] = TxRecord(
+						txid, self._tick, sites, self._tick)
 				self._log_at_time(txid, 'started (read-only)')
 
 	def _beginro(self, cmd, args):
@@ -93,13 +107,11 @@ class TransactionManager(object):
 		check_args_len(cmd, args, 1)
 
 		txid = parse_txid(cmd, args, 0)
-
 		if txid not in self._open_tx:
 			raise ValueError(cmd_error(cmd, args,
 				'Cannot end T{}; not started'.format(txid)))
 
 		transaction = self._open_tx[txid]
-
 		transaction.end()
 		transaction.append_pending(cmd, args,
 				self._runner(self._end, (transaction,)))
@@ -112,30 +124,47 @@ class TransactionManager(object):
 
 		del self._open_tx[transaction.txid]
 
-		abort = lambda site: site.abort(transaction.txid)
-		commit = lambda site: site.commit(transaction.txid)
+		abort = lambda site: site.abort(transaction.txid, transaction.tick)
+		commit = lambda site: site.commit(transaction.txid, transaction.tick)
 
-		# Extract (site, accessed_at_tick) tuple from site.
-		site_accessed_tuple = lambda site: \
-				(site, transaction.site_accessed_at(site.index))
-
+		# Read-only transactions will fail here since we assume that the
+		# in-memory snapshot data are lost when the site goes down.
 		if transaction.alive is True:
 			# Check that all sites are up since the transaction started.
 			action = commit
-			for site, accessed_at_tick in it.ifilter(
-					lambda (_, tick): tick is not None,
-					it.imap(site_accessed_tuple, transaction.sites)):
-				# Abort if any site went down since the first access.
-				if site.up_since > accessed_at_tick:
-					self._log_at_time(transaction.txid,
-							('aborting; site {} went down '
-								'after first access').format(site.index))
-					action = abort
-					break
+
+			# Read-only transactions can skip the site accessed checks.
+			if transaction.is_read_only():
+
+				# Extract (site, accessed_at_tick) tuple from site.
+				site_accessed_tuple = lambda site: \
+						(site, transaction.site_accessed_at(site.index))
+
+				for site, accessed_at_tick in it.ifilter(
+						lambda (_, tick): tick is not None,
+						it.imap(site_accessed_tuple, transaction.sites)):
+
+					# Abort if the site is down.
+					if site.is_up() is not True:
+						self._log_at_time(transaction.txid,
+								('aborting; accessed site {} '
+									'is down').format(site.index))
+						action = abort
+						break
+
+					# Abort if any site went down since the first access.
+					if site.up_since > accessed_at_tick:
+						self._log_at_time(transaction.txid,
+								('aborting; site {} went down '
+									'after first access').format(site.index))
+						action = abort
+						break
+
 		else:
 			action = abort
 
-		for site in transaction.sites:
+		# Apply action to all running sites.
+		for site in it.ifilter(lambda site: site.is_up(), transaction.sites):
 			action(site)
 
 		self._log_at_time(transaction.txid,
@@ -158,6 +187,7 @@ class TransactionManager(object):
 		if txid not in self._open_tx:
 			raise ValueError(cmd_error(cmd, args,
 				'T{} is not active'.format(txid)))
+
 		transaction = self._open_tx[txid]
 
 		variable = parse_variable(cmd, args, 1)
@@ -170,8 +200,8 @@ class TransactionManager(object):
 
 	def _read(self, transaction, variable):
 		'''
-		Read a variable for a transaction. Uses the wait-die algorithm to
-		decide whether or not to block a transaction.
+		Read a variable for a transaction from any available site. Uses the
+		wait-die algorithm to decide whether or not to block a transaction.
 		'''
 
 		# See if the transaction is not alive.
@@ -182,41 +212,77 @@ class TransactionManager(object):
 
 		# Locate an eligible site to read.
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
-		responses = 0
+		blocked, num_down, value_errors = False, 0, 0
 		for site in transaction.sites:
-			read_status = site.try_read(transaction.txid, variable)
+			try:
+				read_status = site.try_read(
+						transaction.txid, variable, transaction.tick)
 
-			# Ignore sites that don't manage the variable.
-			if read_status is None:
-				continue
-			responses += 1
+				# Ignore sites that don't manage the variable.
+				if read_status is None:
+					continue
 
-			if read_status.success is True:
-				transaction.mark_site_accessed(site.index, self._tick)
-				self._log_at_time(transaction.txid,
-						'read x{} -> {} from site {}'.format(
-							variable, read_status.value, site.index))
-				return True
+				elif read_status.success is True:
+					transaction.mark_site_accessed(site.index, self._tick)
+					self._log_at_time(transaction.txid,
+							'read x{} -> {} from site {}'.format(
+								variable, read_status.value, site.index))
+					return True
 
+				else:
+					blocked = True
+					wait_die.append_blockers(read_status.waits_for)
+
+			except IOError:
+				# Keep track of downed sites since we need to query all sites
+				# before rejecting a read as failed.
+				num_down += 1
+
+			except ValueError:
+				# This may be caused by a lost multiversion clone.
+				value_errors += 1
+
+		status, should_die, reason = None, None, None
+
+		# See if we are blocked at some site.
+		if blocked is True:
+			# See if we should block or die.
+			if wait_die.should_die():
+				should_die = True
+				reason = 'killing by wait-die'
 			else:
-				wait_die.append_blockers(read_status.waits_for)
+				status = False
+				reason = 'blocked by T{} reading x{}'.format(
+						wait_die.blocked_by, variable)
 
-		if responses is 0:
-			self._log_at_time(transaction.txid,
-					'waiting to read x{}; no available sites'.format(variable))
-			return False
+		# See if we have any downed sites. We can't reject an operation unless
+		# we have tried all available sites.
+		elif num_down > 0:
+			status = False
+			reason = 'waiting to read x{}; no available sites'.format(variable)
 
-		# See if we should block or die.
-		if wait_die.should_die():
+		# We read every site and the variable is not here.
+		else:
+			should_die = True
+			site_indices = '{{{}}}'.format(
+					', '.join(str(site.index) for site in transaction.sites))
+			reason = 'killing; variable x{} not available on sites {}'.format(
+					value_errors, site_indices)
+			if value_errors > 0:
+				reason += ' with {} fatal errors'.format(value_errors)
+
+		# Either we have (status, reason) or (should_die, reason).
+		assert ((status is None) ^ (should_die is None)) \
+				and reason is not None, 'Invalid status, should_die, reason'
+
+		# Perform final steps.
+		self._log_at_time(transaction.txid, reason)
+		if should_die is True:
 			transaction.die()
-			self._log_at_time(transaction.txid, 'killing by wait-die')
 			self._end(transaction)
 			return True
 		else:
-			self._log_at_time(transaction.txid,
-					'blocked by T{} reading x{}'.format(
-						wait_die.blocked_by, variable))
-			return False
+			return status
 
 	def _append_write(self, cmd, args):
 		''' Receive write command for a transaction. '''
@@ -241,8 +307,8 @@ class TransactionManager(object):
 
 	def _write(self, transaction, variable, value):
 		'''
-		Write a variable for a transaction. Uses the wait-die algorithm to
-		decide whether or not to block a transaction.
+		Write a variable for a transaction to all available sites. Uses the
+		wait-die algorithm to decide whether or not to block a transaction.
 		'''
 
 		# See if the transaction is not alive.
@@ -255,77 +321,103 @@ class TransactionManager(object):
 		sites_written = set()
 		blocked = False
 		for site in transaction.sites:
-			write_status = site.try_write(transaction.txid, variable, value)
+			try:
+				write_status = site.try_write(transaction.txid, variable, value)
 
-			# Ignore sites that don't manage the variable.
-			if write_status is None:
-				continue
+				# Ignore sites that don't manage the variable.
+				if write_status is None:
+					continue
 
-			if write_status.success is True:
-				transaction.mark_site_accessed(site.index, self._tick)
-				sites_written.add(site.index)
-			else:
-				blocked = True
-				wait_die.append_blockers(write_status.waits_for)
+				elif write_status.success is True:
+					transaction.mark_site_accessed(site.index, self._tick)
+					sites_written.add(site.index)
+
+				else:
+					# The writes that succeeded so far will be retried later, but
+					# this transaction holds the lock so it does not matter.
+					blocked = True
+					wait_die.append_blockers(write_status.waits_for)
+
+			except IOError:
+				# We don't need to track downed sites since we care only about
+				# writing at least one copy.
+				pass
+
+		status, should_die, reason = None, None, None
 
 		# Either we wrote no sites, some sites, or all available sites.
 		if blocked is True:
 			if wait_die.should_die():
-				transaction.die()
-				self._log_at_time(transaction.txid, 'killing by wait-die')
-				self._end(transaction)
-				return True
+				should_die = True
+				reason = 'killing by wait-die'
 			else:
-				self._log_at_time(transaction.txid,
-						'blocked by T{} writing x{}'.format(
-							wait_die.blocked_by, variable))
-				return False
+				status = False
+				reason = 'blocked by T{} writing x{}'.format(
+						wait_die.blocked_by, variable)
 
 		# Here we don't need to block so long as we wrote at least 1 site.
 		elif len(sites_written) > 0:
-			self._log_at_time(transaction.txid,
-					'write x{} <- {} to sites {{{}}}'.format(
+			status = True
+			reason = 'write x{} <- {} to sites {{{}}}'.format(
 						variable, value,
-						', '.join(it.imap(str, sites_written))))
-			return True
+						', '.join(it.imap(str, sites_written)))
 
 		# Here we wrote 0 sites, so we need to wait.
 		else:
-			self._log_at_time(transaction.txid,
-					'waiting to write (x{}, {}); no available sites'.format(
-						variable, value))
-			return False
+			status = False
+			reason = 'waiting to write (x{}, {}); no available sites'.format(
+						variable, value)
 
-	def _fail(self, cmd, args):
-		''' Fail site. '''
+		# Either we have (status, reason) or (should_die, reason).
+		assert ((status is None) ^ (should_die is None)) \
+				and reason is not None, 'Invalid status, should_die, reason'
+
+		# Perform final steps.
+		self._log_at_time(transaction.txid, reason)
+		if should_die is True:
+			transaction.die()
+			self._end(transaction)
+			return True
+		else:
+			return status
+
+	def _find_site_apply_action(self, cmd, args, action):
+		'''
+		Find the site indicated by the singe number argument and apply the
+		given action.
+		'''
+
 		check_args_len(cmd, args, 1)
 
 		# Find the site. Will return early.
 		index = int(args[0])
 		for site in self._sites:
 			if site.index is index:
-				site.mark_down()
-				self._log_at_time(None, 'site {} is down'.format(index))
+				action(site)
 				return True
 
 		raise ValueError(cmd_error(cmd, args,
 			'Site {} does not exist'.format(index)))
+
+	def _fail(self, cmd, args):
+		''' Fail site. '''
+
+		def action(site):
+			''' Apply site action. '''
+			site.fail()
+			self._log_at_time(None, 'site {} is down'.format(site.index))
+
+		self._find_site_apply_action(cmd, args, action)
 
 	def _recover(self, cmd, args):
 		''' Recover site. '''
 
-		check_args_len(cmd, args, 1)
+		def action(site):
+			''' Apply site action. '''
+			site.recover(self._tick)
+			self._log_at_time(None, 'site {} is up'.format(site.index))
 
-		# Find the site. Will return early.
-		index = int(args[0])
-		for site in self._sites:
-			if site.index is index:
-				site.recover(self._tick)
-				self._log_at_time(None, 'site {} is up'.format(index))
-				return True
-
-		raise ValueError(cmd_error(cmd, args,
-			'Site {} does not exist'.format(index)))
+		self._find_site_apply_action(cmd, args, action)
 
 	def _dump(self, cmd, args):
 		''' Dump database state. '''
@@ -339,7 +431,7 @@ class TransactionManager(object):
 
 		# Flush all commands that are possible to execute.
 		num_run = 0
-		while transaction.pending:
+		while transaction.pending():
 			_, runner = transaction.peek_pending()
 			if runner() is True:
 				transaction.pop_pending()
@@ -404,8 +496,10 @@ class TransactionManager(object):
 	# Field width used by __str__() method.
 	_FIELD_WIDTH = 4
 
-	def __str__(self):
-		''' Represent the sites as a matrix. '''
+	def to_string(self, partition):
+		''' Format as string. Partition can be None, a variable, or a site. '''
+
+		# TODO: use partition
 
 		out = StringIO.StringIO()
 		variable_fmt_str = '{}' + ('{}' * (len(self._variables) - 1))
@@ -429,5 +523,9 @@ class TransactionManager(object):
 
 		out.seek(0)
 		return out.read()
+
+	def __str__(self):
+		''' Represent the sites as a matrix. '''
+		return self.to_string(None)
 
 
