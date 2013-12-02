@@ -1,0 +1,27 @@
+// Test that sites that are down on end() will cause failure for non read-only
+// transactions.
+begin(T1)
+beginRO(T2)
+R(T2, x1)
+W(T1, x1, 81)
+begin(T3)
+R(T3, x3)
+begin(T4)
+R(T4, x5); W(T4, x5, 9)
+fail(2)
+end(T1) // should abort since 2 is down
+fail(4)
+end(T3) // should abort since 4 is down
+fail(6)
+end(T4) // should abort since 6 is down
+R(T2, x3); R(T2, x5) // don't even care that 4, 6 are down
+end(T2) // succeeds since RO is immune to sites
+recover(6)
+recover(2)
+recover(4)
+dump()
+---
+assertAborted(T1)
+assertCommitted(T2)
+assertAborted(T3)
+assertAborted(T4)

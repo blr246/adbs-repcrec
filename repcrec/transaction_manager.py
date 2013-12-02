@@ -133,7 +133,6 @@ class TransactionManager(object):
 		# Read-only transactions will fail here since we assume that the
 		# in-memory snapshot data are lost when the site goes down.
 		if transaction.alive is True:
-			# Check that all sites are up since the transaction started.
 			action = commit
 
 			# Read-only transactions can skip the site accessed checks.
@@ -143,11 +142,13 @@ class TransactionManager(object):
 				site_accessed_tuple = lambda site: \
 						(site, transaction.site_accessed_at(site.index))
 
+				# Check that sites accessed are up since the time of first access.
 				for site, accessed_at_tick in it.ifilter(
 						lambda (_, tick): tick is not None,
 						it.imap(site_accessed_tuple, transaction.sites)):
 
-					# Abort if the site is down.
+					# Abort if the site is down since it can only come up and
+					# cause an abort.
 					if site.is_up() is not True:
 						self._log_at_time(transaction.txid,
 								('aborting; accessed site {} '
