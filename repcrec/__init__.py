@@ -10,6 +10,8 @@ variables x6 at site 2. The odd indexed variables are at one site each (i.e. 1
 + index number mod 10). Even indexed variables are at all sites. Each variable
 is initialized to the value 10i. Each site has an independent lock table. If
 that site fails, the lock table is erased.
+
+(c) 2013 Brandon Reiss
 '''
 from repcrec.database_manager import DatabaseManager
 from repcrec.lock_manager import LockManager

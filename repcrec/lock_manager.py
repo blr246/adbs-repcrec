@@ -1,5 +1,9 @@
 '''
-Database lock manager.
+The database lock manager manages read and read-write locks for an arbitrary
+database. It supports multiple readers and single writers, and it will promote
+automatically a single reader to a single writer when requested.
+
+(c) 2013 Brandon Reiss
 '''
 
 import StringIO
@@ -146,7 +150,7 @@ class LockManager(object):
 			return None
 
 	def unlock(self, variable, txid):
-		''' Unlock a variable. '''
+		''' Unlock a variable locked by a transaction. '''
 
 		if variable not in self._lock_table:
 			raise ValueError('Variable {} not locked at all'.format(variable))
@@ -164,7 +168,7 @@ class LockManager(object):
 			self._lock_table[variable] = ([], self._UNLOCKED)
 
 	def unlock_all(self, txid):
-		''' Batch unlock all locks held by the given transaction. '''
+		''' Unlock all locks held by the given transaction. '''
 
 		for variable, (txids, _) in self._lock_table.iteritems():
 			if txid in txids:

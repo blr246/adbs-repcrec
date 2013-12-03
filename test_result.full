@@ -1,6 +1,6 @@
 ************************************************************
 ******************** Running ./test_data/test00
-RepCRec starting with data directory /tmp/test_13992
+RepCRec starting with data directory /tmp/test_12969
 Reading commands from test file ./test_data/test00:
 // Ensure that all variables exist.
 begin(T1)
@@ -67,7 +67,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test01
-RepCRec starting with data directory /tmp/test_1413
+RepCRec starting with data directory /tmp/test_12833
 Reading commands from test file ./test_data/test01:
 // Test 1.
 // T2 should abort, T1 should not, because of wait-die
@@ -123,7 +123,7 @@ debug SUCCESS : expecting ABORTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test02
-RepCRec starting with data directory /tmp/test_945
+RepCRec starting with data directory /tmp/test_32471
 Reading commands from test file ./test_data/test02:
 // Test 2
 // No aborts happens, since read-only transactions use
@@ -145,10 +145,10 @@ t2,    -- : sending commands [('beginRO', ('T2',))]
 t2,    T2 : started (read-only)
 t3,    -- : sending commands [('W', ('T1', 'x1', '101')), ('R', ('T2', 'x2'))]
 t3,    T1 : write x1 <- 101 to sites {2}
-t3,    T2 : read x2 -> 20 from site 1 multiversion clone at time 2
+t3,    T2 : read x2 -> 20 from site 1 multiversion clone at t2
 t4,    -- : sending commands [('W', ('T1', 'x2', '102')), ('R', ('T2', 'x1'))]
 t4,    T1 : write x2 <- 102 to sites {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-t4,    T2 : read x1 -> 10 from site 2 multiversion clone at time 2
+t4,    T2 : read x1 -> 10 from site 2 multiversion clone at t2
 t5,    -- : sending commands [('end', ('T1',))]
 t5,    T1 : committed
 t6,    -- : sending commands [('end', ('T2',))]
@@ -180,7 +180,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test03
-RepCRec starting with data directory /tmp/test_4431
+RepCRec starting with data directory /tmp/test_13120
 Reading commands from test file ./test_data/test03:
 // Test 3
 // T1 should not abort because its site did not fail.
@@ -245,7 +245,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test04
-RepCRec starting with data directory /tmp/test_2448
+RepCRec starting with data directory /tmp/test_21026
 Reading commands from test file ./test_data/test04:
 // Test 4
 // Now T1 aborts, since site 2 died after T1 accessed it. T2 ok.
@@ -310,7 +310,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test05
-RepCRec starting with data directory /tmp/test_7268
+RepCRec starting with data directory /tmp/test_19134
 Reading commands from test file ./test_data/test05:
 // Test 5
 // T1 fails again here because it wrote to a site that failed. T2 ok.
@@ -375,7 +375,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test06
-RepCRec starting with data directory /tmp/test_14587
+RepCRec starting with data directory /tmp/test_21496
 Reading commands from test file ./test_data/test06:
 // Test 6
 // T1 ok. T2 ok. T2 reads from a recovering site, but odd variables only
@@ -441,7 +441,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test07
-RepCRec starting with data directory /tmp/test_12988
+RepCRec starting with data directory /tmp/test_24138
 Reading commands from test file ./test_data/test07:
 // Test 7
 // T2 should read the initial version of x3 based on multiversion read
@@ -464,15 +464,15 @@ t1,    T1 : started
 t2,    -- : sending commands [('beginRO', ('T2',))]
 t2,    T2 : started (read-only)
 t3,    -- : sending commands [('R', ('T2', 'x1'))]
-t3,    T2 : read x1 -> 10 from site 2 multiversion clone at time 2
+t3,    T2 : read x1 -> 10 from site 2 multiversion clone at t2
 t4,    -- : sending commands [('R', ('T2', 'x2'))]
-t4,    T2 : read x2 -> 20 from site 1 multiversion clone at time 2
+t4,    T2 : read x2 -> 20 from site 1 multiversion clone at t2
 t5,    -- : sending commands [('W', ('T1', 'x3', '33'))]
 t5,    T1 : write x3 <- 33 to sites {4}
 t6,    -- : sending commands [('end', ('T1',))]
 t6,    T1 : committed
 t7,    -- : sending commands [('R', ('T2', 'x3'))]
-t7,    T2 : read x3 -> 30 from site 4 multiversion clone at time 2
+t7,    T2 : read x3 -> 30 from site 4 multiversion clone at t2
 t8,    -- : sending commands [('end', ('T2',))]
 t8,    T2 : committed
 t9,    -- : sending commands [('dump', ())]
@@ -502,7 +502,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test08
-RepCRec starting with data directory /tmp/test_23810
+RepCRec starting with data directory /tmp/test_25385
 Reading commands from test file ./test_data/test08:
 // Test 8
 // T2 still reads the initial value of x3
@@ -529,9 +529,9 @@ t1,    T1 : started
 t2,    -- : sending commands [('beginRO', ('T2',))]
 t2,    T2 : started (read-only)
 t3,    -- : sending commands [('R', ('T2', 'x1'))]
-t3,    T2 : read x1 -> 10 from site 2 multiversion clone at time 2
+t3,    T2 : read x1 -> 10 from site 2 multiversion clone at t2
 t4,    -- : sending commands [('R', ('T2', 'x2'))]
-t4,    T2 : read x2 -> 20 from site 1 multiversion clone at time 2
+t4,    T2 : read x2 -> 20 from site 1 multiversion clone at t2
 t5,    -- : sending commands [('W', ('T1', 'x3', '33'))]
 t5,    T1 : write x3 <- 33 to sites {4}
 t6,    -- : sending commands [('end', ('T1',))]
@@ -539,9 +539,9 @@ t6,    T1 : committed
 t7,    -- : sending commands [('beginRO', ('T3',))]
 t7,    T3 : started (read-only)
 t8,    -- : sending commands [('R', ('T3', 'x3'))]
-t8,    T3 : read x3 -> 33 from site 4 multiversion clone at time 7
+t8,    T3 : read x3 -> 33 from site 4 multiversion clone at t7
 t9,    -- : sending commands [('R', ('T2', 'x3'))]
-t9,    T2 : read x3 -> 30 from site 4 multiversion clone at time 2
+t9,    T2 : read x3 -> 30 from site 4 multiversion clone at t2
 t10,   -- : sending commands [('end', ('T2',))]
 t10,   T2 : committed
 t11,   -- : sending commands [('end', ('T3',))]
@@ -574,7 +574,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test09
-RepCRec starting with data directory /tmp/test_32659
+RepCRec starting with data directory /tmp/test_26983
 Reading commands from test file ./test_data/test09:
 // Test 9
 // T1, T2, T3 ok. T3 should wait because older
@@ -644,7 +644,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test10
-RepCRec starting with data directory /tmp/test_21732
+RepCRec starting with data directory /tmp/test_12305
 Reading commands from test file ./test_data/test10:
 // Test 10
 // T3 should not wait and should abort
@@ -710,7 +710,7 @@ debug SUCCESS : expecting ABORTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test11
-RepCRec starting with data directory /tmp/test_19799
+RepCRec starting with data directory /tmp/test_2271
 Reading commands from test file ./test_data/test11:
 // Test that younger transactions abort rather than wait for older ones.
 begin(T1)
@@ -804,7 +804,7 @@ debug SUCCESS : expecting ABORTED for T4
 
 ************************************************************
 ******************** Running ./test_data/test12
-RepCRec starting with data directory /tmp/test_7461
+RepCRec starting with data directory /tmp/test_18436
 Reading commands from test file ./test_data/test12:
 // Make sure that when all sites are locked a transaction will block.
 begin(T1)
@@ -860,7 +860,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test13
-RepCRec starting with data directory /tmp/test_30072
+RepCRec starting with data directory /tmp/test_22242
 Reading commands from test file ./test_data/test13:
 // Test that when all sites fail for reading, the reader will block.
 begin(T1)
@@ -909,7 +909,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test14
-RepCRec starting with data directory /tmp/test_16257
+RepCRec starting with data directory /tmp/test_8227
 Reading commands from test file ./test_data/test14:
 // Test that sites can go down before they are written.
 begin(T1)
@@ -960,7 +960,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test15
-RepCRec starting with data directory /tmp/test_7089
+RepCRec starting with data directory /tmp/test_26611
 Reading commands from test file ./test_data/test15:
 // Test that RO transactions will block when sites are down.
 beginRO(T1)
@@ -977,7 +977,7 @@ t1,    T1 : started (read-only)
 t2,    -- : sending commands [('fail', ('2',))]
 t2,    -- : site 2 is down
 t3,    -- : sending commands [('R', ('T1', 'x1'))]
-t3,    T1 : read x1 -> 10 from site 2 multiversion clone at time 1
+t3,    T1 : read x1 -> 10 from site 2 multiversion clone at t1
 t4,    -- : sending commands [('recover', ('2',))]
 t4,    -- : site 2 is up
 t5,    -- : sending commands [('end', ('T1',))]
@@ -1008,7 +1008,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test16
-RepCRec starting with data directory /tmp/test_18176
+RepCRec starting with data directory /tmp/test_22394
 Reading commands from test file ./test_data/test16:
 // Make sure that the definition of up since is precise with respect to first
 // accessing a site.
@@ -1103,7 +1103,7 @@ debug SUCCESS : expecting COMMITTED for T4
 
 ************************************************************
 ******************** Running ./test_data/test17
-RepCRec starting with data directory /tmp/test_867
+RepCRec starting with data directory /tmp/test_32693
 Reading commands from test file ./test_data/test17:
 // From Chris Keitel's email.
 fail(1); fail(2); fail(3); fail(4); fail(5)
@@ -1232,7 +1232,7 @@ S10:  20*
  * : denotes that the variable is unavailable for reading
 ---------------------------------------------------------
 t16,   -- : sending commands [('R', ('T2', 'x2'))]
-t16,   T2 : read x2 -> 21 from site 6 multiversion clone at time 8
+t16,   T2 : read x2 -> 21 from site 6 multiversion clone at t8
 t17,   -- : sending commands [('end', ('T2',))]
 t17,   T2 : committed
 t18,   -- : sending commands [('dump', ())]
@@ -1263,7 +1263,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test18
-RepCRec starting with data directory /tmp/test_12638
+RepCRec starting with data directory /tmp/test_2021
 Reading commands from test file ./test_data/test18:
 // Ensure that pending FIFO works.
 begin(T1)
@@ -1328,5 +1328,107 @@ debug SUCCESS : expecting COMMITTED for T1
 debug SUCCESS : expecting COMMITTED for T2
 debug SUCCESS : expecting COMMITTED for T3
 ******************** Completed ./test_data/test18
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test19
+RepCRec starting with data directory /tmp/test_6456
+Reading commands from test file ./test_data/test19:
+// Test that sites that are down on end() will cause failure for non read-only
+// transactions.
+begin(T1)
+beginRO(T2)
+R(T2, x1)
+W(T1, x1, 81)
+begin(T3)
+R(T3, x3)
+begin(T4)
+R(T4, x5); W(T4, x5, 9)
+fail(2)
+end(T1) // should abort since 2 is down
+fail(4)
+end(T3) // should abort since 4 is down
+fail(6)
+end(T4) // should abort since 6 is down
+R(T2, x3); R(T2, x5) // don't even care that 4, 6 are down
+end(T2) // succeeds since RO is immune to sites
+recover(6)
+recover(2)
+recover(4)
+dump()
+---
+assertAborted(T1)
+assertCommitted(T2)
+assertAborted(T3)
+assertAborted(T4)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('beginRO', ('T2',))]
+t2,    T2 : started (read-only)
+t3,    -- : sending commands [('R', ('T2', 'x1'))]
+t3,    T2 : read x1 -> 10 from site 2 multiversion clone at t2
+t4,    -- : sending commands [('W', ('T1', 'x1', '81'))]
+t4,    T1 : write x1 <- 81 to sites {2}
+t5,    -- : sending commands [('begin', ('T3',))]
+t5,    T3 : started
+t6,    -- : sending commands [('R', ('T3', 'x3'))]
+t6,    T3 : read x3 -> 30 from site 4
+t7,    -- : sending commands [('begin', ('T4',))]
+t7,    T4 : started
+t8,    -- : sending commands [('R', ('T4', 'x5')), ('W', ('T4', 'x5', '9'))]
+t8,    T4 : read x5 -> 50 from site 6
+t8,    T4 : write x5 <- 9 to sites {6}
+t9,    -- : sending commands [('fail', ('2',))]
+t9,    -- : site 2 is down
+t10,   -- : sending commands [('end', ('T1',))]
+t10,   T1 : aborting; accessed site 2 is down
+t10,   T1 : aborted
+t11,   -- : sending commands [('fail', ('4',))]
+t11,   -- : site 4 is down
+t12,   -- : sending commands [('end', ('T3',))]
+t12,   T3 : aborting; accessed site 4 is down
+t12,   T3 : aborted
+t13,   -- : sending commands [('fail', ('6',))]
+t13,   -- : site 6 is down
+t14,   -- : sending commands [('end', ('T4',))]
+t14,   T4 : aborting; accessed site 6 is down
+t14,   T4 : aborted
+t15,   -- : sending commands [('R', ('T2', 'x3')), ('R', ('T2', 'x5'))]
+t15,   T2 : read x3 -> 30 from site 4 multiversion clone at t2
+t15,   T2 : read x5 -> 50 from site 6 multiversion clone at t2
+t16,   -- : sending commands [('end', ('T2',))]
+t16,   T2 : committed
+t17,   -- : sending commands [('recover', ('6',))]
+t17,   -- : site 6 is up
+t18,   -- : sending commands [('recover', ('2',))]
+t18,   -- : site 2 is up
+t19,   -- : sending commands [('recover', ('4',))]
+t19,   -- : site 4 is up
+t20,   -- : sending commands [('dump', ())]
+t20,   -- : dumping all sites
+--------------------------------------------------------------------------------------------------------
+      x1   x2   x3   x4   x5   x6   x7   x8   x9  x10  x11  x12  x13  x14  x15  x16  x17  x18  x19  x20 
+     ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+ S1:   -   20    -   40    -   60    -   80    -  100    -  120    -  140    -  160    -  180    -  200 
+ S2:  10   20*   -   40*   -   60*   -   80*   -  100* 110  120*   -  140*   -  160*   -  180*   -  200*
+ S3:   -   20    -   40    -   60    -   80    -  100    -  120    -  140    -  160    -  180    -  200 
+ S4:   -   20*  30   40*   -   60*   -   80*   -  100*   -  120* 130  140*   -  160*   -  180*   -  200*
+ S5:   -   20    -   40    -   60    -   80    -  100    -  120    -  140    -  160    -  180    -  200 
+ S6:   -   20*   -   40*  50   60*   -   80*   -  100*   -  120*   -  140* 150  160*   -  180*   -  200*
+ S7:   -   20    -   40    -   60    -   80    -  100    -  120    -  140    -  160    -  180    -  200 
+ S8:   -   20    -   40    -   60   70   80    -  100    -  120    -  140    -  160  170  180    -  200 
+ S9:   -   20    -   40    -   60    -   80    -  100    -  120    -  140    -  160    -  180    -  200 
+S10:   -   20    -   40    -   60    -   80   90  100    -  120    -  140    -  160    -  180  190  200 
+--------------------------------------------------------------------------------------------------------
+ x : denotes a variable
+ S : denotes a site
+ * : denotes that the variable is unavailable for reading
+--------------------------------------------------------------------------------------------------------
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+debug SUCCESS : expecting ABORTED for T3
+debug SUCCESS : expecting ABORTED for T4
+******************** Completed ./test_data/test19
 ************************************************************
 

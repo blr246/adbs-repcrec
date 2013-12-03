@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 '''
 Run RepCRec by taking commands from stdin or from a TestFile.
+
+(c) 2013 Brandon Reiss
 '''
 from repcrec import TransactionManager, CommandStreamReader, TestFile
 
@@ -10,7 +12,14 @@ import sys
 import itertools as it
 
 def cleanup_dir(data_dir):
-	''' Cleanup test directory. '''
+	'''
+	Cleanup test directory using a recursive delete.
+
+	Parameters
+	----------
+	data_dir : string
+		Directory where database data reside.
+	'''
 
 	for dirpath, dirnames, filenames in os.walk(
 			data_dir, topdown=False):
@@ -21,7 +30,20 @@ def cleanup_dir(data_dir):
 	os.rmdir(data_dir)
 
 def run_database(data_dir, command_stream):
-	''' Run the database. '''
+	'''
+	Run the database.
+
+	Parameters
+	----------
+	command_stream : iterable of commands
+		Iterable that delivers commands compatible with
+		TransactionManager.send_commands().
+
+	Returns
+	-------
+	transaction_manager : TransactionManager
+		The database TransactionManager.
+	'''
 
 	# Setup default variable mappings.
 	data_file_map = dict((index, dict((variable, 10 * variable)
@@ -32,15 +54,28 @@ def run_database(data_dir, command_stream):
 
 	transaction_manager = TransactionManager(data_file_map, data_dir)
 
+	# Iterate over commands until EOF.
 	for commands in command_stream:
 		transaction_manager.send_commands(commands)
 
 	return transaction_manager
 
 def main():
-	''' Main method. '''
+	'''
+	Parse command-line arguments and run the database.
+	'''
 
-	argument_parser = argparse.ArgumentParser()
+	description = \
+			'''
+			Run the Replicated Concurrency Control and Recovery (RepCRec)
+			database system. The database supports receiving commands from
+			either stdin or from a test file.
+
+			Note that the DATA_DIR must not exist to ensure that the runner
+			does not destroy and previously existing data. All data are
+			deleted by the runner before it exits.
+			'''
+	argument_parser = argparse.ArgumentParser(description=description)
 	argument_parser.add_argument('DATA_DIR',
 			help='Path test data.')
 	argument_parser.add_argument('-f', '--test-file',
@@ -66,9 +101,11 @@ def main():
 			print test_file.read()
 
 	try:
+		# Run the standard database commands.
 		os.makedirs(data_dir)
 		transaction_manager = run_database(data_dir, command_stream)
 
+		# When reading a test file, verify any special debug commands.
 		if is_test is True:
 			# Check assertions.
 			commit_abort_log = transaction_manager.get_commit_abort_log()

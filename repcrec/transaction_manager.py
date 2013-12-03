@@ -1,22 +1,31 @@
 '''
-Database command processor.
+The transaction manager is the database command processor. It takes a
+serialized stream of incoming commands from multiple database clients and
+submits operations to database sites in such a manner as to avoid deadlocks and
+keep the database in a consistent state.
+
+This transaction manager uses wait-die for conflict resolution and the
+available copies algorithm for replication.
+
+(c) 2013 Brandon Reiss
 '''
 from repcrec.site import Site
 from repcrec.util import delegator
 from repcrec.util import \
 		WaitDie, TxRecord, parse_variable, parse_txid, check_args_len, \
 		cmd_error, format_command
+
 import itertools as it
 import StringIO
 import collections
 
 class TransactionManager(object):
-	''' Database command processor. '''
+	''' Database transaction manager. '''
 
 	COMMITTED, ABORTED = range(2)
 	def __init__(self, data_file_map, data_path):
 		'''
-		Initialize database with sites.
+		Initialize the database with sites.
 
 		Parameters
 		----------
@@ -62,7 +71,7 @@ class TransactionManager(object):
 					for data in data_file_map.itervalues()]))))
 
 	def _log_at_time(self, txid, msg):
-		''' Log a message with timestamp and txid. '''
+		''' Log a message with timestamp for the given txid. '''
 
 		if txid is not None:
 			print '{:<4s} {:>4s} : {}'.format(
@@ -74,36 +83,46 @@ class TransactionManager(object):
 					'--', msg)
 
 	def _begin(self, cmd, args, is_ro=False):
-		''' Begin a transaction. This command does not block. '''
+		'''
+		Begin a transaction. This command does not block.
+
+		When is_ro is True, the transaction uses a set of multiversion clones
+		for all sites that are up when this call executes. Each transaction
+		keeps a record of the sites that it may access.
+		'''
 
 		check_args_len(cmd, args, 1)
 
+		# Do not allow duplicate transactions.
 		txid = parse_txid(cmd, args, 0)
 		if txid in self._open_tx:
 			raise ValueError(cmd_error(cmd, args,
 				'Cannot begin T{}; already started'.format(txid)))
-		else:
-			if is_ro is False:
-				self._open_tx[txid] = TxRecord(
-						txid, self._tick, self._sites, None)
-				self._log_at_time(txid, 'started')
 
-			else:
-				# Clone all running sites.
-				sites = [site for site in self._sites if site.is_up()]
-				for site in sites:
-					site.multiversion_clone(self._tick)
-				# Add this transaction.
-				self._open_tx[txid] = TxRecord(
-						txid, self._tick, sites, self._tick)
-				self._log_at_time(txid, 'started (read-only)')
+		# Spawn the transaction.
+		if is_ro is False:
+			self._open_tx[txid] = TxRecord(
+					txid, self._tick, self._sites, None)
+			self._log_at_time(txid, 'started')
+
+		else:
+			# Clone all running sites for read-only transactions.
+			sites = [site for site in self._sites if site.is_up()]
+			for site in sites:
+				site.multiversion_clone(self._tick)
+			# Add this transaction.
+			self._open_tx[txid] = TxRecord(
+					txid, self._tick, sites, self._tick)
+			self._log_at_time(txid, 'started (read-only)')
 
 	def _beginro(self, cmd, args):
-		''' Begin a read-only transaction. This command does not block. '''
+		'''
+		Begin a read-only transaction. See _begin() for more information.
+		'''
 		self._begin(cmd, args, is_ro=True)
 
 	def _append_end(self, cmd, args):
-		''' Receive the command to end a transaction. '''
+		''' Receive and enqueue the command to end a transaction. '''
 
 		check_args_len(cmd, args, 1)
 
@@ -121,22 +140,23 @@ class TransactionManager(object):
 
 	def _end(self, transaction):
 		'''
-		End a transaction. Ensures that all sites are up for the duration of
-		the transaction.
+		End a transaction. Ensures that all sites are up since they were first
+		accessed by the transaction.
 		'''
 
 		del self._open_tx[transaction.txid]
 
-		abort = lambda site: site.abort(transaction.txid, transaction.tick)
-		commit = lambda site: site.commit(transaction.txid, transaction.tick)
+		# Actions for commit and abort.
+		ro_token = transaction.start_time if transaction.is_read_only else None
+		abort = lambda site: site.abort(transaction.txid, ro_token)
+		commit = lambda site: site.commit(transaction.txid, ro_token)
 
-		# Read-only transactions will fail here since we assume that the
-		# in-memory snapshot data are lost when the site goes down.
+		# Only alive transactions can commit.
 		if transaction.alive is True:
 			action = commit
 
 			# Read-only transactions can skip the site accessed checks.
-			if not transaction.is_read_only():
+			if not transaction.is_read_only:
 
 				# Extract (site, accessed_at_tick) tuple from site.
 				site_accessed_tuple = lambda site: \
@@ -183,7 +203,7 @@ class TransactionManager(object):
 		return True
 
 	def _append_read(self, cmd, args):
-		''' Receive read command for a transaction. '''
+		''' Receive and enqueue a read command for a transaction. '''
 
 		check_args_len(cmd, args, 2)
 
@@ -199,6 +219,7 @@ class TransactionManager(object):
 			raise ValueError(cmd_error(cmd, args,
 				'Variable {} is not in the database'.format(variable)))
 
+		# Append the validated read command.
 		transaction.append_pending(cmd, args,
 				self._runner(self._read, (transaction, variable)))
 		if transaction not in self._tx_fifo:
@@ -208,6 +229,9 @@ class TransactionManager(object):
 		'''
 		Read a variable for a transaction from any available site. Uses the
 		wait-die algorithm to decide whether or not to block a transaction.
+
+		Read-only transactions will always succeed here so long as there was a
+		site up when the transaction started that hosts the variable to read.
 		'''
 
 		# See if the transaction is not alive.
@@ -217,12 +241,13 @@ class TransactionManager(object):
 			return True
 
 		# Locate an eligible site to read.
+		ro_token = transaction.start_time if transaction.is_read_only else None
 		wait_die = WaitDie(self._open_tx, transaction.start_time)
-		blocked, num_down, value_errors = False, 0, 0
+		blocked, num_down = False, 0
 		for site in transaction.sites:
 			try:
 				read_status = site.try_read(
-						transaction.txid, variable, transaction.tick)
+						transaction.txid, variable, ro_token)
 
 				# Ignore sites that don't manage the variable.
 				if read_status is None:
@@ -232,9 +257,8 @@ class TransactionManager(object):
 					transaction.mark_site_accessed(site.index, self._tick)
 					msg = 'read x{} -> {} from site {}'.format(
 							variable, read_status.value, site.index)
-					if transaction.is_read_only():
-						msg += ' multiversion clone at time {}'.format(
-								transaction.tick)
+					if transaction.is_read_only:
+						msg += ' multiversion clone at t{}'.format(ro_token)
 					self._log_at_time(transaction.txid, msg)
 					return True
 
@@ -247,13 +271,9 @@ class TransactionManager(object):
 				# before rejecting a read as failed.
 				num_down += 1
 
-			except ValueError:
-				# This may be caused by a lost multiversion clone.
-				value_errors += 1
-
 		status, should_die, reason = None, None, None
 
-		# See if we are blocked at some site.
+		# When blocked we check on wait-die for the result.
 		if blocked is True:
 			# See if we should block or die.
 			if wait_die.should_die():
@@ -276,15 +296,13 @@ class TransactionManager(object):
 			site_indices = '{{{}}}'.format(
 					', '.join(str(site.index) for site in transaction.sites))
 			reason = 'killing; variable x{} not available on sites {}'.format(
-					value_errors, site_indices)
-			if value_errors > 0:
-				reason += ' with {} fatal errors'.format(value_errors)
+					variable, site_indices)
 
 		# Either we have (status, reason) or (should_die, reason).
 		assert ((status is None) ^ (should_die is None)) \
 				and reason is not None, 'Invalid status, should_die, reason'
 
-		# Perform final steps.
+		# Perform final steps for read.
 		self._log_at_time(transaction.txid, reason)
 		if should_die is True:
 			transaction.die()
@@ -294,7 +312,7 @@ class TransactionManager(object):
 			return status
 
 	def _append_write(self, cmd, args):
-		''' Receive write command for a transaction. '''
+		''' Receive and enqueue a write command for a transaction. '''
 
 		check_args_len(cmd, args, 3)
 
@@ -311,6 +329,7 @@ class TransactionManager(object):
 
 		value = int(args[2])
 
+		# Append the validated write command.
 		transaction.append_pending(cmd, args,
 				self._runner(self._write, (transaction, variable, value)))
 		if transaction not in self._tx_fifo:
@@ -354,9 +373,10 @@ class TransactionManager(object):
 				# writing at least one copy.
 				pass
 
+		# Either we wrote no sites, some sites, or all available sites.
 		status, should_die, reason = None, None, None
 
-		# Either we wrote no sites, some sites, or all available sites.
+		# When blocked we check on wait-die for the result.
 		if blocked is True:
 			if wait_die.should_die():
 				should_die = True
@@ -440,13 +460,12 @@ class TransactionManager(object):
 		elif len(args) is 1:
 			check_args_len(cmd, args, 1)
 
-			is_site = False
-
-			# Parse the partition if it is specified.
 			if len(args[0]) is 0:
 				raise ValueError(cmd_error(cmd, args,
 					'Argument must match either [0-9]+ or x[0-9]+'))
 
+			# See if this dump is for a site or a variable.
+			is_site = False
 			try:
 				if args[0][0] == 'x':
 					partition = int(args[0][1:])
@@ -537,7 +556,13 @@ class TransactionManager(object):
 	_FIELD_WIDTH = 5
 
 	def to_string(self, partition, is_site=False):
-		''' Format as string. Partition can be None, a variable, or a site. '''
+		'''
+		Format as string. Partition can be None, a variable, or a site.
+
+		The output is a matrix where each row is a site and each column is a
+		variable. Each variable has an entry for whether or not it is available
+		at call time. Partitions are row or column slices on the matrix.
+		'''
 
 		# Either we slice in rows or columns or None depending on the
 		# partition.

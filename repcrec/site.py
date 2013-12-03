@@ -1,5 +1,16 @@
 '''
-Database site.
+The database site has a LockManager and a DatabaseManager and executes
+two-phase locked operations on data items. The site keeps track of variables
+that are available for reading and when it last recovered.
+
+Sites also support multiversion read clones. Note that the clones behave as
+though they are copied locally to the caller through a client interface in that
+a read clone taken for some site will still return data even when that site is
+down. A site must be running only when the read clone is first requested. Since
+read clones are reference counted, they must be released by calling either
+commit() or abort() for each transaction that requested them.
+
+(c) 2013 Brandon Reiss
 '''
 
 from repcrec.lock_manager import LockManager
@@ -7,11 +18,6 @@ from repcrec.database_manager import DatabaseManager
 from repcrec.util import OperationStatus
 
 import collections
-
-def _raise_ioerror_if_down(index, up_since):
-	''' Raise IOError() when down. '''
-	if up_since is None:
-		raise IOError('Site {} is down'.format(index))
 
 class Site(object):
 	''' Represents a database site. '''
@@ -50,6 +56,11 @@ class Site(object):
 	def __repr__(self):
 		return '{{ \'index\': {}, \'data\': {}, \'locks\': {} }}'.format(
 				self._index, self._database_manager, self._lock_manager)
+
+	def _raise_ioerror_if_down(self):
+		''' Raise IOError() when site is down. '''
+		if self._up_since is None:
+			raise IOError('Site {} is down'.format(self._index))
 
 	def dump(self):
 		'''
@@ -106,8 +117,12 @@ class Site(object):
 
 		self._up_since = tick
 
-	def _release_multiversion_clone(self, tick):
+	def _release_multiversion_clone(self, txid, tick):
 		''' Release a reader on a multiversion clone. '''
+
+		if tick not in self._multiversion_clones:
+			raise ValueError(('Multiversion clone '
+				'for T{} at time t{} is invalid').format(txid, tick))
 
 		use_count, clone = self._multiversion_clones[tick]
 		use_count -= 1
@@ -125,42 +140,46 @@ class Site(object):
 
 	def abort(self, txid, tick):
 		'''
-		Abort an open transaction. Release multiversion clone when tick is not
-		None.
+		Abort an open transaction with zero side-effects on the site data.
+
+		All locks held by the transaction will be freed. Releases a
+		multiversion clone when tick is not None.
 		'''
 
 		# Read-only transactions are never down.
 		if tick is None:
-			_raise_ioerror_if_down(self._index, self._up_since)
+			self._raise_ioerror_if_down()
 
 		if txid in self._pending_writes:
 			del self._pending_writes[txid]
 		self._lock_manager.unlock_all(txid)
 
-		if tick is not None and tick in self._multiversion_clones:
-			self._release_multiversion_clone(tick)
+		if tick is not None:
+			self._release_multiversion_clone(txid, tick)
 
 	def commit(self, txid, tick):
 		'''
-		Commit all pending writes for a transaction. Release multiversion clone
-		when tick is not None.
+		Commit all pending writes for a transaction atomically.
+
+		All locks held by the transaction will be freed. Releases a
+		multiversion clone when tick is not None.
 		'''
 
 		# Read-only transactions are never down.
 		if tick is None:
-			_raise_ioerror_if_down(self._index, self._up_since)
+			self._raise_ioerror_if_down()
 
 		if txid in self._pending_writes:
 			self._database_manager.batch_write(self._pending_writes[txid])
 			del self._pending_writes[txid]
 		self._lock_manager.unlock_all(txid)
 
-		if tick is not None and tick in self._multiversion_clones:
-			self._release_multiversion_clone(tick)
+		if tick is not None:
+			self._release_multiversion_clone(txid, tick)
 
 	def try_read(self, txid, variable, tick):
 		'''
-		Try to read this site.
+		Try to read from this site.
 
 		Parameters
 		----------
@@ -179,13 +198,13 @@ class Site(object):
 
 		# Read-only transactions are never down.
 		if tick is None:
-			_raise_ioerror_if_down(self._index, self._up_since)
+			self._raise_ioerror_if_down()
 
 		# Does this site have this variable at all?
 		if variable not in self._variables:
 			return None
 
-		# Is this a multiversion clone read?
+		# Is this a multiversion clone read? If so, it's "local".
 		if tick is not None:
 			if tick in self._multiversion_clones:
 				value = self._multiversion_clones[tick][1].read(variable)
@@ -200,19 +219,20 @@ class Site(object):
 			return None
 
 		else:
-			# Try to get a read lock.
+			# Try to get a read lock. Since this is two-phase locking, we will
+			# succeed if we can get a lock.
 			if self._lock_manager.try_lock(
 					variable, txid, LockManager.R_LOCK) is True:
 
 				value = None
 
 				# The only time that there can be a pending write on this
-				# variable is if the calling transaction holds the write lock.
+				# variable is if the calling transaction holds the write lock
+				# since we were able to get a read lock.
 				if txid in self._pending_writes:
-					for pending_variable, pending_value \
-							in self._pending_writes[txid]:
-						if variable is pending_variable:
-							value = pending_value
+					for pend_var, pend_val in self._pending_writes[txid]:
+						if variable is pend_var:
+							value = pend_val
 							break
 
 				# The variable is not written by this transaction, so get it
@@ -223,13 +243,15 @@ class Site(object):
 				return OperationStatus(True, variable, value, None)
 
 			else:
+				# No lock mean we return nothing.
 				return OperationStatus(
 						False, variable, None,
 						self._lock_manager.get_locks(variable)[0])
 
 	def try_write(self, txid, variable, value):
 		'''
-		Try to read this site.
+		Try to write to this site. All writes are pending until they are
+		flushed atomically to the DatabaseManager on commit().
 
 		Parameters
 		----------
@@ -246,7 +268,8 @@ class Site(object):
 			None when the variable is not available and OperationStatus otherwise.
 		'''
 
-		_raise_ioerror_if_down(self._index, self._up_since)
+		# Sites must be up for writing. Multiversion clones do not write.
+		self._raise_ioerror_if_down()
 
 		# Does this site have this variable at all?
 		if variable not in self._variables:
@@ -262,6 +285,7 @@ class Site(object):
 			return OperationStatus(True, variable, value, None)
 
 		else:
+			# No lock means we can't submit this write here.
 			return OperationStatus(
 					False, variable, value,
 					self._lock_manager.get_locks(variable)[0])
@@ -275,7 +299,8 @@ class Site(object):
 		In other words, after their creation the downed status of the site is
 		ignored and all operations will succeed unconditionally. In a real
 		distributed system, such functionality could be implemented
-		transparently by the site connection client.
+		transparently by the site connection client, but this is inefficient
+		since all site data must be cloned over the network.
 
 		Note that commit() or abort() must be called once for each call to
 		multiversion_clone() in order to release the clone.
@@ -284,7 +309,7 @@ class Site(object):
 		read-only states.
 		'''
 
-		_raise_ioerror_if_down(self._index, self._up_since)
+		self._raise_ioerror_if_down()
 
 		# Initialize clone or increase use count.
 		if tick not in self._multiversion_clones:

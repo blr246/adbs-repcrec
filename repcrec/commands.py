@@ -1,5 +1,13 @@
 '''
-RepCRec command utilities.
+RepCRec command utilities. These classes and functions are used to read RepCRec
+commands as strings and produce parsed tuples of (command (args, ...)) for
+processing with TransactionManager.send_commands().
+
+Beyond the standard RepCRec specification, we support the special debug
+commands assertCommitted() and assertAborted() used to check the results of
+test files.
+
+(c) 2013 Brandon Reiss
 '''
 from repcrec import TransactionManager
 from repcrec.util import delegator, parse_txid, check_args_len
@@ -12,6 +20,17 @@ def parse_commands(line):
 	'''
 	Parse lines containing RepCRec commands into the format accepted by
 	TransactionManager.send_commands().
+
+	Parameters
+	----------
+	line : string
+		A line from command input.
+
+	Returns
+	-------
+	commands : list of commands
+		List of tuples of the form (command, (args, ...)) ready for processing
+		by TransactionManager.send_commands().
 	'''
 
 	# Ignore comments.
@@ -39,39 +58,38 @@ def parse_commands(line):
 		return None
 
 class CommandStreamReader(object):
-	''' Read commands from a stream. '''
+	''' Read commands from a file stream. '''
 
 	def __init__(self, stream):
-		''' Initialize from stream. '''
+		''' nitialize from a file stream.'''
 		self._stream = stream
 
 	def __iter__(self):
-		''' Iterate over command stream. '''
+		'''
+		Iterate over command stream returning (command, (args, ...) tuples.
+
+		Note that this may be used only once since the underlying stream is
+		spent in the process. An example usage is
+
+			for commands in CommandStreamReader(sys.stdin):
+				transaction_manager.send_commands(commands)
+
+		where TransactionManager is an instance of repcrec.TransactionManager.
+		'''
 
 		for line in self._stream:
 			commands = parse_commands(line)
 			if commands is not None:
 				yield commands
 
-	def readline(self):
-		''' Read a single line. '''
-		return parse_commands(self._stream.readline())
-
 class TestFile(object):
 	''' Load a database test file and read commands. '''
 
-	def __init__(self, file_path):
-		''' Initialize from path. '''
-
-		self._file_path = os.path.abspath(file_path)
-		if not os.path.isfile(self._file_path):
-			raise ValueError(
-					'Test file {} does not exist'.format(self._file_path))
+	def _parse(self):
+		''' Parse the input file. '''
 
 		# Open and parse the file.
 		standard_commands = True
-		self._commands = []
-		self._debug_commands = []
 		with open(self._file_path, 'r') as test_data:
 			for line_num, line in enumerate(test_data):
 				# Transition to debug when line matches '---'.
@@ -99,8 +117,25 @@ class TestFile(object):
 							args = args_checker(self, cmd, args)
 						self._debug_commands.append((cmd, args))
 
+	def __init__(self, file_path):
+		''' Initialize from file path. '''
+
+		if not os.path.isfile(file_path):
+			raise ValueError(
+					'Test file {} does not exist'.format(file_path))
+
+		self._file_path = os.path.abspath(file_path)
+		self._commands = []
+		self._debug_commands = []
+
+		self._parse()
+
 	def __iter__(self):
-		''' Iterate over commands. '''
+		'''
+		Iterate over commands. Clients may iterate over commands as many times
+		as is needed since all commands are stored in memory within the
+		TestFile instance.
+		'''
 		return iter(self._commands)
 
 	# Delegators for (ARGUMENT_CHECKING, EXECUTION).
@@ -119,7 +154,7 @@ class TestFile(object):
 
 	@staticmethod
 	def _log_debug_assert(result, msg):
-		''' Log debug assert result. '''
+		''' Log debug command assertXxx() result. '''
 
 		if result is True:
 			print 'debug SUCCESS : {}'.format(msg)
@@ -156,7 +191,15 @@ class TestFile(object):
 				args, 'ABORTED', TransactionManager.ABORTED, commit_abort_log)
 
 	def assert_debug_commands(self, commmit_abort_log):
-		''' Check debug assertions made in the test file. '''
+		'''
+		Check debug assertions made in the test file.
+
+		Parameters
+		----------
+		commmit_abort_log : iterable of tuples
+			Iterable of (txid, tick, status) tuples where status is one of
+			TransactionManager.COMMITTED or TransactionManager.ABORTED.
+		'''
 
 		for cmd, args in self._debug_commands:
 			self._DEBUG_CMD_DELEGATORS[cmd][1](self, args, commmit_abort_log)

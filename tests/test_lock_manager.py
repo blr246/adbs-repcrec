@@ -1,5 +1,7 @@
 '''
 Tests for LockManager.
+
+(c) 2013 Brandon Reiss
 '''
 import unittest
 from repcrec import LockManager

@@ -1,5 +1,7 @@
 '''
 Tests for DatabaseManager.
+
+(c) 2013 Brandon Reiss
 '''
 
 from repcrec import DatabaseManager
@@ -13,7 +15,7 @@ class DatabaseManagerTest(unittest.TestCase):
 	def validate_values(self, dbm, values):
 		''' Verify that dbm values match values dict. '''
 		for variable, value in values.iteritems():
-			self.assertEqual(value, dbm.get_value(variable))
+			self.assertEqual(value, dbm.read(variable))
 
 	def setUp(self):
 		''' Create test directory. '''
@@ -40,7 +42,7 @@ class DatabaseManagerTest(unittest.TestCase):
 				os.rmdir(os.path.join(dirpath, dirname))
 		os.rmdir(self._test_dir)
 
-	def test_get_set_values(self):
+	def test_read_write(self):
 		''' Test that getting and setting values succeeds. '''
 
 		dbm, values = self._dbm, self._values
@@ -51,15 +53,51 @@ class DatabaseManagerTest(unittest.TestCase):
 		for variable in values:
 			new_value = random.randint(101, 200)
 			values[variable] = new_value
-			dbm.set_value(variable, new_value)
+			dbm.write(variable, new_value)
 
+		self.validate_values(dbm, values)
+
+	def test_batch_write(self):
+		''' Test batch_write(). '''
+
+		dbm, values = self._dbm, self._values
+
+		# Change all of the values.
+		for variable in values:
+			values[variable] = random.randint(101, 200)
+		dbm.batch_write(((var, val) for var, val in values.iteritems()))
+
+		self.validate_values(dbm, values)
+
+	def test_batch_write_fail(self):
+		''' Test batch_write(). '''
+
+		dbm, values = self._dbm, self._values
+
+		# Give batch_write a bad item to write.
+		bad_values = dict(values)
+		for variable in values:
+			bad_values[variable] = random.randint(101, 200)
+		bad_values[len(values) + 1] = 0
+
+		# Writing bad_values should fail with a ValueError for the bad variable
+		# key. Make sure that happens.
+		bad_key = False
+		try:
+			dbm.batch_write(((var, val) for var, val
+				in bad_values.iteritems()))
+
+		except ValueError:
+			bad_key = True
+
+		self.assertTrue(bad_key)
 		self.validate_values(dbm, values)
 
 	def test_accssors(self):
 		''' Test DatabaseManager accesors. '''
 
 		dbm, values = self._dbm, self._values
-		self.assertEqual(values.keys(), dbm.variables)
+		self.assertEqual(tuple(values.keys()), dbm.variables)
 		self.assertEqual(self._test_dir, dbm.data_path)
 		self.assertEqual(
 				os.path.join(self._test_dir, '{}.dat'.format(self._prefix)),

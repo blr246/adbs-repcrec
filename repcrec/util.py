@@ -1,5 +1,9 @@
 '''
-Common utilities.
+Common utilities for RepCRec including a wait-die implementation, a transaction
+class, various formatters and parsers, and a class to return the result of a
+database operation.
+
+(c) 2013 Brandon Reiss
 '''
 
 import itertools as it
@@ -8,7 +12,16 @@ class WaitDie(object):
 	''' State management for wait-die algorithm. '''
 
 	def __init__(self, open_tx, tx_tick):
-		''' Initialize with transaction tick. '''
+		'''
+		Initialize wait-die algorithm.
+
+		Parameters
+		----------
+		open_tx : dict of TxRecord
+			Dict of txid to TxRecord used to determine the age of any blockers.
+		tx_tick : integer
+			Age of the transaction that is potentially blocked.
+		'''
 		self._tx_tick = tx_tick
 		self._open_tx = open_tx
 		self._oldest_blocker = 1 << 31
@@ -28,20 +41,32 @@ class WaitDie(object):
 		Check if transaction should die. Younger transactions abort rather
 		than wait for older ones.
 		'''
-		#print 'tx_tick {} > {} oldest_blocker'.format(
-		#		self._tx_tick, self._oldest_blocker)
 		return self._tx_tick > self._oldest_blocker
 
 	@property
 	def blocked_by(self):
-		''' Return id of blocking transaction. '''
+		''' Return id of blocking transaction or None. '''
 		return self._blocked_by
 
 
 class TxRecord(object):
-	''' Record tracking an in-progress transaction. '''
+	''' Record tracking transaction in the database system. '''
 
-	def __init__(self, txid, start_time, sites, tick):
+	def __init__(self, txid, start_time, sites, is_ro):
+		'''
+		Initialize a transaction record.
+
+		Parameters
+		----------
+		txid : integer
+			Id of the transaction.
+		start_time : integer
+			Time when transaction began.
+		sites : list of sites
+			List of sites available to the transaction.
+		is_ro : boolean
+			Whether or not the transaction is read-only.
+		'''
 		self._txid = txid
 		self._start_time = start_time
 		self._sites_accessed = dict()
@@ -49,7 +74,7 @@ class TxRecord(object):
 		self._pending_commands = []
 		self._ended = False
 		self._sites = sites
-		self._tick = tick
+		self._is_ro = is_ro
 
 	@property
 	def txid(self):
@@ -67,9 +92,9 @@ class TxRecord(object):
 		return self._sites
 
 	@property
-	def tick(self):
-		''' The tick for read-only transactions or else None. '''
-		return self._tick
+	def is_read_only(self):
+		''' Check if the transaction is read-only. '''
+		return self._is_ro
 
 	@property
 	def alive(self):
@@ -80,10 +105,6 @@ class TxRecord(object):
 	def ended(self):
 		''' Check if the transaction is ended. '''
 		return self._ended
-
-	def is_read_only(self):
-		''' Query read-only. '''
-		return self._tick is not None
 
 	def site_accessed_at(self, index):
 		''' Return time of first site access or None if never accessed. '''
@@ -127,10 +148,23 @@ class TxRecord(object):
 
 
 class OperationStatus(object):
-	''' Operation status. '''
+	''' Database operation status. '''
 
 	def __init__(self, success, variable, value, waits_for):
-		''' Initialize all data. '''
+		'''
+		Initialize operation status.
+
+		Parameters
+		----------
+		success : boolean
+			Whether or not operation succeeded.
+		variable : integer
+			Variable that was involved.
+		value : integer or None
+			Value of the operation.
+		waits_for : list of txid or None
+			Ids for transactions blocking this operation
+		'''
 
 		assert ((success is True
 			and variable is not None
@@ -174,7 +208,7 @@ class OperationStatus(object):
 
 
 def delegator(method):
-	''' Create a method delegator. '''
+	''' Create a method delegator for a method name. '''
 
 	def call_method(delegate, *args, **kwargs):
 		''' Call method on delegate. '''
@@ -184,22 +218,35 @@ def delegator(method):
 	return call_method
 
 def format_command(cmd, args):
-	''' Format command string. '''
+	''' Format command string as command(args, ...). '''
 	return '{}({})'.format(cmd, ', '.join(args))
 
 def check_args_len(cmd, args, expect_len):
-	''' Check command arguments length. '''
+	''' Check command arguments length matches expected length. '''
 
 	if len(args) != expect_len:
 		raise ValueError(('Command {} should have only {} '
 			'argument(s)').format(format_command(cmd, args), expect_len))
 
 def cmd_error(cmd, args, msg):
-	''' Generate command error prefix. '''
+	''' Command error string with standard prefix. '''
 	return 'ERROR CMD {} : {}'.format(format_command(cmd, args), msg)
 
 def parse_id(cmd, args, idx, first_match, name):
-	''' Parse transaction id of the form X[0-9]+. '''
+	'''
+	Parse id of the form X[0-9]+.
+
+	Parameters
+	----------
+	args : list of arguments
+		List of string arguments.
+	idx : integer
+		Index of argument to parse.
+	first_match : character
+		Prefix for id.
+	name : string
+		Name of the id used for logging.
+	'''
 
 	raw = args[idx]
 	if raw[0] != first_match:
@@ -214,10 +261,10 @@ def parse_id(cmd, args, idx, first_match, name):
 	return parsed
 
 def parse_txid(cmd, args, idx):
-	''' Parse transaction id. '''
+	''' Parse transaction id T[0-9]+. '''
 	return parse_id(cmd, args, idx, 'T', 'Transaction id')
 
 def parse_variable(cmd, args, idx):
-	''' Parse transaction id. '''
+	''' Parse variable x[0-9]+. '''
 	return parse_id(cmd, args, idx, 'x', 'Variable')
 
