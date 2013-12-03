@@ -147,9 +147,7 @@ class Site(object):
 		multiversion clone when tick is not None.
 		'''
 
-		# Read-only transactions are never down.
-		if tick is None:
-			self._raise_ioerror_if_down()
+		self._raise_ioerror_if_down()
 
 		if txid in self._pending_writes:
 			del self._pending_writes[txid]
@@ -166,9 +164,7 @@ class Site(object):
 		multiversion clone when tick is not None.
 		'''
 
-		# Read-only transactions are never down.
-		if tick is None:
-			self._raise_ioerror_if_down()
+		self._raise_ioerror_if_down()
 
 		if txid in self._pending_writes:
 			self._database_manager.batch_write(self._pending_writes[txid])
@@ -200,9 +196,7 @@ class Site(object):
 			None when the variable is not available and OperationStatus otherwise.
 		'''
 
-		# Read-only transactions are never down.
-		if tick is None:
-			self._raise_ioerror_if_down()
+		self._raise_ioerror_if_down()
 
 		# Does this site have this variable at all?
 		if variable not in self._variables:

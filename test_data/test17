@@ -21,5 +21,4 @@ end(T2)
 dump()
 ---
 assertCommitted(T1)
-assertCommitted(T2)
 assertCommitted(T3)

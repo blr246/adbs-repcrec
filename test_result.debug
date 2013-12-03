@@ -123,7 +123,6 @@ debug SUCCESS : expecting COMMITTED for T4
 ************************************************************
 ******************** Running ./test_data/test17
 debug SUCCESS : expecting COMMITTED for T1
-debug SUCCESS : expecting COMMITTED for T2
 debug SUCCESS : expecting COMMITTED for T3
 ******************** Completed ./test_data/test17
 ************************************************************
