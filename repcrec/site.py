@@ -101,6 +101,7 @@ class Site(object):
 		self._up_since = None
 		self._available_variables = set()
 		self._lock_manager = LockManager()
+		self._pending_writes = collections.defaultdict(list)
 
 	def recover(self, tick):
 		''' Recover downed site. '''
@@ -171,6 +172,9 @@ class Site(object):
 
 		if txid in self._pending_writes:
 			self._database_manager.batch_write(self._pending_writes[txid])
+			# Variables are written and so they are now available for reading.
+			for variable, _ in self._pending_writes[txid]:
+				self._available_variables.add(variable)
 			del self._pending_writes[txid]
 		self._lock_manager.unlock_all(txid)
 
@@ -281,7 +285,6 @@ class Site(object):
 
 			# The write is pending until commit().
 			self._pending_writes[txid].append((variable, value))
-			self._available_variables.add(variable)
 			return OperationStatus(True, variable, value, None)
 
 		else:
