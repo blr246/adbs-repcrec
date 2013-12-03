@@ -17,6 +17,10 @@ class DatabaseManagerTest(unittest.TestCase):
 		for variable, value in values.iteritems():
 			self.assertEqual(value, dbm.read(variable))
 
+	def make_dbm(self):
+		''' Make DatabaseManager. '''
+		return DatabaseManager(self._values, self._test_dir, self._prefix)
+
 	def setUp(self):
 		''' Create test directory. '''
 
@@ -29,7 +33,7 @@ class DatabaseManagerTest(unittest.TestCase):
 		self._values = dict((variable, random.randint(1, 100))
 				for variable in range(1, 11))
 
-		self._dbm = DatabaseManager(self._values, self._test_dir, self._prefix)
+		self._dbm = self.make_dbm()
 
 	def tearDown(self):
 		''' Cleanup test directory. '''
@@ -43,7 +47,7 @@ class DatabaseManagerTest(unittest.TestCase):
 		os.rmdir(self._test_dir)
 
 	def test_read_write(self):
-		''' Test that getting and setting values succeeds. '''
+		''' Test that reading and writing values succeeds. '''
 
 		dbm, values = self._dbm, self._values
 
@@ -70,7 +74,7 @@ class DatabaseManagerTest(unittest.TestCase):
 		self.validate_values(dbm, values)
 
 	def test_batch_write_fail(self):
-		''' Test batch_write(). '''
+		''' Test batch_write() failure. '''
 
 		dbm, values = self._dbm, self._values
 
@@ -112,20 +116,36 @@ class DatabaseManagerTest(unittest.TestCase):
 			self.assertEqual(value, dbm.dump(variable))
 
 	def test_recover(self):
-		''' Test that getting and setting values succeeds. '''
+		''' Test that recovery succeeds. '''
 
 		dbm, values = self._dbm, self._values
+		data_file_path, data_file_tmp_path = \
+				dbm.data_file_path, dbm._data_file_tmp_path
 
 		# Setup DatabaseManager then delete and re-create it.
 		del dbm
-		dbm = DatabaseManager(values, self._test_dir, 'test_site')
+		dbm = self.make_dbm()
 
 		self.validate_values(dbm, values)
 
 		# Now move the site file to the temp file and check recovery.
-		os.rename(dbm.data_file_path, dbm._data_file_tmp_path)
 		del dbm
-		dbm = DatabaseManager(values, self._test_dir, 'test_site')
+		os.rename(data_file_path, data_file_tmp_path)
+		dbm = self.make_dbm()
+
+		self.validate_values(dbm, values)
+
+		# Now test failure before the temporary file is deleted.
+		del dbm
+		with open(data_file_path, 'r') as data_file:
+			with open(data_file_tmp_path, 'w') as tmp_data_file:
+				for line in data_file:
+					tmp_data_file.write(line)
+		dbm = self.make_dbm()
+		# Write something to induce a _flush().
+		values[1] = 0
+		dbm.write(1, 0)
+		self.assertFalse(os.path.isfile(data_file_tmp_path))
 
 		self.validate_values(dbm, values)
 
