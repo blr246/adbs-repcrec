@@ -16,8 +16,7 @@ begin(T3)
 W(T3,x2,23) // writes x2.7 because only site 7 is available
 end(T3) // T3 commits successfully
 dump(x2) // x2 = 23
-R(T2,x2) // This should succeed since T2 is RO.
-end(T2)
+R(T2,x2) // This will block because site 6 is down.
 dump()
 ---
 assertCommitted(T1)

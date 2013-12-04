@@ -14,11 +14,7 @@ fail(4)
 end(T3) // should abort since 4 is down
 fail(6)
 end(T4) // should abort since 6 is down
-R(T2, x3); R(T2, x5) // don't even care that 4, 6 are down
-end(T2) // succeeds since RO is immune to sites
-recover(6)
-recover(2)
-recover(4)
+end(T2) // should commit since read-only
 dump()
 ---
 assertAborted(T1)

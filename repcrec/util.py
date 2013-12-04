@@ -48,6 +48,11 @@ class WaitDie(object):
 		''' Return id of blocking transaction or None. '''
 		return self._blocked_by
 
+	@property
+	def blocked_by_age(self):
+		''' Return age of blocking transaction or None. '''
+		return self._oldest_blocker if self._blocked_by is not None else None
+
 
 class TxRecord(object):
 	''' Record tracking transaction in the database system. '''
@@ -71,7 +76,7 @@ class TxRecord(object):
 		self._start_time = start_time
 		self._sites_accessed = dict()
 		self._alive = True
-		self._pending_commands = []
+		self._blocked = None
 		self._ended = False
 		self._sites = sites
 		self._is_ro = is_ro
@@ -125,21 +130,26 @@ class TxRecord(object):
 		else:
 			self._ended = False
 
-	def pending(self):
-		''' Check if there are pending commands. '''
-		return len(self._pending_commands) is not 0
+	def block(self, cmd, args, runner):
+		''' Block the transaction. '''
 
-	def peek_pending(self):
-		''' Get next pending command. '''
-		return self._pending_commands[0]
+		if self._blocked is not None:
+			(blk_cmd, blk_args), _ = self._blocked
+			raise RuntimeError(('Transaction {} '
+				'is blocked by {} but received command {}').format(
+					self._txid,
+					format_command(blk_cmd, blk_args),
+					format_command(cmd, args)))
 
-	def pop_pending(self):
-		''' Pop next pending command. '''
-		self._pending_commands = self._pending_commands[1:]
+		self._blocked = ((cmd, args), runner)
 
-	def append_pending(self, cmd, args, runner):
-		''' Append a pending command. '''
-		self._pending_commands.append(((cmd, args), runner))
+	def blocked(self):
+		''' Check if transaction is blocked. '''
+		return self._blocked
+
+	def unblock(self):
+		''' Unblock transaction. '''
+		self._blocked = None
 
 	def mark_site_accessed(self, index, tick):
 		''' Mark that transaction accessed a site. '''

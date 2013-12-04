@@ -8,11 +8,10 @@ R(T1, x1)     // T1 older waits for T2 younger.
 R(T2, x6)
 W(T3, x6, 22) // T3 younger dies since T2 is older.
 W(T4, x8, 12)
-R(T1, x8)     // T1 older waits for T4 younger.
 R(T2, x8)     // T2 older waits for T4 younger.
-R(T4, x1)     // T4 younger does since T2 is older.
-end(T1)
+R(T4, x1)     // T4 younger dies since T2 is older.
 end(T2)
+end(T1)
 dump()
 ---
 assertCommitted(T1)

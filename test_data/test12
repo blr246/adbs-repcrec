@@ -3,8 +3,8 @@ begin(T1)
 begin(T2)
 W(T2, x2, 8) // x2 is now locked everywhere
 W(T1, x2, 6) // T1 should block
-end(T1)
 end(T2)
+end(T1)
 dump()
 ---
 assertCommitted(T1)

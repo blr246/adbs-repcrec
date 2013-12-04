@@ -42,7 +42,7 @@ class TransactionManager(object):
 
 		# Track open transactions, timing, and log commits and aborts.
 		self._open_tx = dict()
-		self._tx_fifo = []
+		self._blocked_queue = []
 		self._commit_abort_log = []
 		self._tick = 0
 
@@ -81,6 +81,33 @@ class TransactionManager(object):
 			print '{:<4s} {:>4s} : {}'.format(
 					't{},'.format(self._tick),
 					'--', msg)
+
+	def _fail_if_blocked(self, cmd, args, transaction):
+		''' Check that transaction is not blocked. '''
+
+		if transaction in self._blocked_queue:
+			(blk_cmd, blk_args), _ = transaction.blocked()
+			raise RuntimeError(('Transaction {} '
+				'is blocked by {} but received command {}').format(
+					transaction.txid,
+					format_command(blk_cmd, blk_args),
+					format_command(cmd, args)))
+
+	def _block(self, cmd, args, transaction, runner):
+		''' Block the given transaction and add it to the queue. '''
+
+		transaction.block(cmd, args, runner)
+		if transaction not in self._blocked_queue:
+			self._blocked_queue.append(transaction)
+
+	@staticmethod
+	def _wait_die_reason(variable, wait_die, transaction):
+		''' Assemble wait-die reason string. '''
+		return ('killing by wait-die reading x{}; '
+				'(T{}, t{}) < (T{}, t{})').format(
+						variable,
+						wait_die.blocked_by, wait_die.blocked_by_age,
+						transaction.txid, transaction.start_time)
 
 	def _begin(self, cmd, args, is_ro=False):
 		'''
@@ -132,11 +159,12 @@ class TransactionManager(object):
 				'Cannot end T{}; not started'.format(txid)))
 
 		transaction = self._open_tx[txid]
+		self._fail_if_blocked(cmd, args, transaction)
+
 		transaction.end()
-		transaction.append_pending(cmd, args,
-				self._runner(self._end, (transaction,)))
-		if transaction not in self._tx_fifo:
-			self._tx_fifo.append(transaction)
+		if self._end(transaction) is not True:
+			self._block(cmd, args, transaction,
+					self._runner(self._end, (transaction,)))
 
 	def _end(self, transaction):
 		'''
@@ -213,17 +241,16 @@ class TransactionManager(object):
 				'T{} is not active'.format(txid)))
 
 		transaction = self._open_tx[txid]
+		self._fail_if_blocked(cmd, args, transaction)
 
 		variable = parse_variable(cmd, args, 1)
 		if variable not in self._variables:
 			raise ValueError(cmd_error(cmd, args,
 				'Variable {} is not in the database'.format(variable)))
 
-		# Append the validated read command.
-		transaction.append_pending(cmd, args,
+		if self._read(transaction, variable) is not True:
+			self._block(cmd, args, transaction,
 				self._runner(self._read, (transaction, variable)))
-		if transaction not in self._tx_fifo:
-			self._tx_fifo.append(transaction)
 
 	def _read(self, transaction, variable):
 		'''
@@ -233,6 +260,9 @@ class TransactionManager(object):
 		Read-only transactions will always succeed here so long as there was a
 		site up when the transaction started that hosts the variable to read.
 		'''
+
+		if transaction.txid not in self._open_tx:
+			raise RuntimeError('T{} is not open'.format(transaction.txid))
 
 		# See if the transaction is not alive.
 		if transaction.alive is False:
@@ -278,7 +308,7 @@ class TransactionManager(object):
 			# See if we should block or die.
 			if wait_die.should_die():
 				should_die = True
-				reason = 'killing by wait-die'
+				reason = self._wait_die_reason(variable, wait_die, transaction)
 			else:
 				status = False
 				reason = 'blocked by T{} reading x{}'.format(
@@ -320,7 +350,9 @@ class TransactionManager(object):
 		if txid not in self._open_tx:
 			raise ValueError(cmd_error(cmd, args,
 				'T{} is not active'.format(txid)))
+
 		transaction = self._open_tx[txid]
+		self._fail_if_blocked(cmd, args, transaction)
 
 		variable = parse_variable(cmd, args, 1)
 		if variable not in self._variables:
@@ -329,17 +361,18 @@ class TransactionManager(object):
 
 		value = int(args[2])
 
-		# Append the validated write command.
-		transaction.append_pending(cmd, args,
-				self._runner(self._write, (transaction, variable, value)))
-		if transaction not in self._tx_fifo:
-			self._tx_fifo.append(transaction)
+		if self._write(transaction, variable, value) is not True:
+			self._block(cmd, args, transaction,
+					self._runner(self._write, (transaction, variable, value)))
 
 	def _write(self, transaction, variable, value):
 		'''
 		Write a variable for a transaction to all available sites. Uses the
 		wait-die algorithm to decide whether or not to block a transaction.
 		'''
+
+		if transaction.txid not in self._open_tx:
+			raise RuntimeError('T{} is not open'.format(transaction.txid))
 
 		# See if the transaction is not alive.
 		if transaction.alive is False:
@@ -380,7 +413,7 @@ class TransactionManager(object):
 		if blocked is True:
 			if wait_die.should_die():
 				should_die = True
-				reason = 'killing by wait-die'
+				reason = self._wait_die_reason(variable, wait_die, transaction)
 			else:
 				status = False
 				reason = 'blocked by T{} writing x{}'.format(
@@ -527,6 +560,17 @@ class TransactionManager(object):
 
 		self._log_at_time(None, 'sending commands {}'.format(commands))
 
+		# Try to run all blocked transactions.
+		for transaction in self._blocked_queue:
+			if transaction.blocked() is not None:
+				_, runner = transaction.blocked()
+				if runner() is True:
+					transaction.unblock()
+
+		# Remove transactions no longer blocked.
+		self._blocked_queue = [
+				tx for tx in self._blocked_queue if tx.blocked() is not None]
+
 		for cmd, args in commands:
 			cmd_lower = cmd.lower()
 
@@ -536,12 +580,6 @@ class TransactionManager(object):
 			else:
 				raise ValueError('Command {} is not recognized'
 					.format(format_command(cmd, args)))
-
-		# Try to run all pending commands until there is no more progress.
-		for transaction in self._tx_fifo:
-			self._run_pending(transaction)
-		# Remove transactions no longer pending.
-		self._tx_fifo = [tx for tx in self._tx_fifo if tx.pending()]
 
 	def get_commit_abort_log(self):
 		'''
