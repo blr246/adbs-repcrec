@@ -212,8 +212,11 @@ class TransactionManager(object):
 
 		else:
 			# Remove blocked transactions from the queue.
-			if transaction in self._blocked_queue:
+			if transaction.blocked():
 				self._blocked_queue.remove(transaction)
+				self._log_at_time(transaction.txid,
+						'aborting; sending end() when blocked has '
+						'abort semantics')
 			action = abort
 
 		# Apply action to all running sites.
