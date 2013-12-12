@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Short script used to verify that unit tests pass and that the output cache
+# files are up-to-date before committing.
+#
+# Copy this file into .git/hooks in order to run on every commit.
+#
+# (c) 2013 Brandon Reiss
+
+
+# Change to the repository root directory.
+hooks_dir=`dirname $0`
+project_home="${hooks_dir}/../../"
+pushd ${project_home} 1>/dev/null
+
+# Run the unit tests.
+./run_unittests.sh 1>/dev/null 2>&1
+if [[ $? != 0 ]]; then
+	echo Error: failed running project unit tests
+	exit 1
+fi
+
+# Update the debug and full outputs.
+echo Updating test case output files...
+./run_test_cases.sh > test_result.full
+./run_test_cases.sh -d > test_result.debug
+git add test_result.full test_result.debug
+
+popd 1>/dev/null
+
+exit 0

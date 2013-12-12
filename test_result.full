@@ -1,6 +1,6 @@
 ************************************************************
 ******************** Running ./test_data/test00
-RepCRec starting with data directory /tmp/test_29302
+RepCRec starting with data directory /tmp/test_22945
 Reading commands from test file ./test_data/test00:
 // Ensure that all variables exist.
 begin(T1)
@@ -67,7 +67,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test01
-RepCRec starting with data directory /tmp/test_22484
+RepCRec starting with data directory /tmp/test_3341
 Reading commands from test file ./test_data/test01:
 // Test 1.
 // T2 should abort, T1 should not, because of wait-die
@@ -123,7 +123,7 @@ debug SUCCESS : expecting ABORTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test02
-RepCRec starting with data directory /tmp/test_16991
+RepCRec starting with data directory /tmp/test_6346
 Reading commands from test file ./test_data/test02:
 // Test 2
 // No aborts happens, since read-only transactions use
@@ -180,7 +180,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test03
-RepCRec starting with data directory /tmp/test_19034
+RepCRec starting with data directory /tmp/test_15854
 Reading commands from test file ./test_data/test03:
 // Test 3
 // T1 should not abort because its site did not fail.
@@ -245,7 +245,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test04
-RepCRec starting with data directory /tmp/test_21089
+RepCRec starting with data directory /tmp/test_28464
 Reading commands from test file ./test_data/test04:
 // Test 4
 // Now T1 aborts, since site 2 died after T1 accessed it. T2 ok.
@@ -310,7 +310,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test05
-RepCRec starting with data directory /tmp/test_10584
+RepCRec starting with data directory /tmp/test_887
 Reading commands from test file ./test_data/test05:
 // Test 5
 // T1 fails again here because it wrote to a site that failed. T2 ok.
@@ -375,7 +375,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test06
-RepCRec starting with data directory /tmp/test_30794
+RepCRec starting with data directory /tmp/test_3726
 Reading commands from test file ./test_data/test06:
 // Test 6
 // T1 ok. T2 ok. T2 reads from a recovering site, but odd variables only
@@ -441,7 +441,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test07
-RepCRec starting with data directory /tmp/test_6350
+RepCRec starting with data directory /tmp/test_13145
 Reading commands from test file ./test_data/test07:
 // Test 7
 // T2 should read the initial version of x3 based on multiversion read
@@ -502,7 +502,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test08
-RepCRec starting with data directory /tmp/test_4918
+RepCRec starting with data directory /tmp/test_12877
 Reading commands from test file ./test_data/test08:
 // Test 8
 // T2 still reads the initial value of x3
@@ -574,7 +574,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test09
-RepCRec starting with data directory /tmp/test_12484
+RepCRec starting with data directory /tmp/test_3884
 Reading commands from test file ./test_data/test09:
 // Test 9
 // T1, T2, T3 ok. T3 should wait because older
@@ -644,7 +644,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test10
-RepCRec starting with data directory /tmp/test_5724
+RepCRec starting with data directory /tmp/test_28880
 Reading commands from test file ./test_data/test10:
 // Test 10
 // T3 should not wait and should abort
@@ -710,7 +710,7 @@ debug SUCCESS : expecting ABORTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test11
-RepCRec starting with data directory /tmp/test_12362
+RepCRec starting with data directory /tmp/test_11646
 Reading commands from test file ./test_data/test11:
 // Test that younger transactions abort rather than wait for older ones.
 begin(T1)
@@ -799,7 +799,7 @@ debug SUCCESS : expecting ABORTED for T4
 
 ************************************************************
 ******************** Running ./test_data/test12
-RepCRec starting with data directory /tmp/test_22883
+RepCRec starting with data directory /tmp/test_23519
 Reading commands from test file ./test_data/test12:
 // Make sure that when all sites are locked a transaction will block.
 begin(T1)
@@ -854,7 +854,7 @@ debug SUCCESS : expecting COMMITTED for T2
 
 ************************************************************
 ******************** Running ./test_data/test13
-RepCRec starting with data directory /tmp/test_24660
+RepCRec starting with data directory /tmp/test_30844
 Reading commands from test file ./test_data/test13:
 // Test that when all sites fail for reading, the reader will block.
 begin(T1)
@@ -904,7 +904,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test14
-RepCRec starting with data directory /tmp/test_30309
+RepCRec starting with data directory /tmp/test_3607
 Reading commands from test file ./test_data/test14:
 // Test that sites can go down before they are written.
 begin(T1)
@@ -955,7 +955,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test15
-RepCRec starting with data directory /tmp/test_10430
+RepCRec starting with data directory /tmp/test_18230
 Reading commands from test file ./test_data/test15:
 // Test that RO transactions will block when sites are down.
 beginRO(T1)
@@ -1005,7 +1005,7 @@ debug SUCCESS : expecting COMMITTED for T1
 
 ************************************************************
 ******************** Running ./test_data/test16
-RepCRec starting with data directory /tmp/test_14185
+RepCRec starting with data directory /tmp/test_21235
 Reading commands from test file ./test_data/test16:
 // Make sure that the definition of up since is precise with respect to first
 // accessing a site.
@@ -1100,7 +1100,7 @@ debug SUCCESS : expecting COMMITTED for T4
 
 ************************************************************
 ******************** Running ./test_data/test17
-RepCRec starting with data directory /tmp/test_28755
+RepCRec starting with data directory /tmp/test_19236
 Reading commands from test file ./test_data/test17:
 // From Chris Keitel's email.
 fail(1); fail(2); fail(3); fail(4); fail(5)
@@ -1256,7 +1256,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test18
-RepCRec starting with data directory /tmp/test_17661
+RepCRec starting with data directory /tmp/test_3257
 Reading commands from test file ./test_data/test18:
 // Ensure that pending FIFO works.
 begin(T1)
@@ -1326,7 +1326,7 @@ debug SUCCESS : expecting COMMITTED for T3
 
 ************************************************************
 ******************** Running ./test_data/test19
-RepCRec starting with data directory /tmp/test_13738
+RepCRec starting with data directory /tmp/test_11893
 Reading commands from test file ./test_data/test19:
 // Test that sites that are down on end() will cause failure for non read-only
 // transactions.
@@ -1411,5 +1411,39 @@ debug SUCCESS : expecting COMMITTED for T2
 debug SUCCESS : expecting ABORTED for T3
 debug SUCCESS : expecting ABORTED for T4
 ******************** Completed ./test_data/test19
+************************************************************
+
+************************************************************
+******************** Running ./test_data/test20
+RepCRec starting with data directory /tmp/test_18299
+Reading commands from test file ./test_data/test20:
+// Test that a transaction can abort while blocked.
+begin(T1)
+begin(T2)
+R(T2, x2)
+W(T1, x2, 8) // Should be blocked now
+end(T1)
+end(T2)
+---
+assertAborted(T1)
+assertCommitted(T2)
+
+t1,    -- : sending commands [('begin', ('T1',))]
+t1,    T1 : started
+t2,    -- : sending commands [('begin', ('T2',))]
+t2,    T2 : started
+t3,    -- : sending commands [('R', ('T2', 'x2'))]
+t3,    T2 : read x2 -> 20 from site 1
+t4,    -- : sending commands [('W', ('T1', 'x2', '8'))]
+t4,    T1 : blocked by T2 writing x2
+t5,    -- : sending commands [('end', ('T1',))]
+t5,    T1 : blocked by T2 writing x2
+t5,    T1 : aborting; sending end() when blocked has abort semantics
+t5,    T1 : aborted
+t6,    -- : sending commands [('end', ('T2',))]
+t6,    T2 : committed
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test20
 ************************************************************
 

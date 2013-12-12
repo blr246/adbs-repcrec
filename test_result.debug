@@ -144,3 +144,10 @@ debug SUCCESS : expecting ABORTED for T4
 ******************** Completed ./test_data/test19
 ************************************************************
 
+************************************************************
+******************** Running ./test_data/test20
+debug SUCCESS : expecting ABORTED for T1
+debug SUCCESS : expecting COMMITTED for T2
+******************** Completed ./test_data/test20
+************************************************************
+
