@@ -149,7 +149,7 @@ class TransactionManager(object):
 		self._begin(cmd, args, is_ro=True)
 
 	def _append_end(self, cmd, args):
-		''' Receive and enqueue the command to end a transaction. '''
+		''' Receive command to end a transaction. '''
 
 		check_args_len(cmd, args, 1)
 
@@ -159,17 +159,15 @@ class TransactionManager(object):
 				'Cannot end T{}; not started'.format(txid)))
 
 		transaction = self._open_tx[txid]
-		self._fail_if_blocked(cmd, args, transaction)
 
 		transaction.end()
-		if self._end(transaction) is not True:
-			self._block(cmd, args, transaction,
-					self._runner(self._end, (transaction,)))
+		self._end(transaction)
 
 	def _end(self, transaction):
 		'''
 		End a transaction. Ensures that all sites are up since they were first
-		accessed by the transaction.
+		accessed by the transaction. If the transaction is blocked currently,
+		then the command has abort semantics.
 		'''
 
 		del self._open_tx[transaction.txid]
@@ -180,7 +178,7 @@ class TransactionManager(object):
 		commit = lambda site: site.commit(transaction.txid, ro_token)
 
 		# Only alive transactions can commit.
-		if transaction.alive is True:
+		if transaction.alive is True and not transaction.blocked():
 			action = commit
 
 			# Read-only transactions can skip the site accessed checks.
@@ -213,6 +211,9 @@ class TransactionManager(object):
 						break
 
 		else:
+			# Remove blocked transactions from the queue.
+			if transaction in self._blocked_queue:
+				self._blocked_queue.remove(transaction)
 			action = abort
 
 		# Apply action to all running sites.

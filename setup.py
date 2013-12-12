@@ -8,7 +8,7 @@ setup(name='RepCRec',
 		description='Replicated Concurrency Control and Recovery',
 		author='Brandon Reiss',
 		author_email='blr246@nyu.edu',
-		url='https://github.com/blr246/repcrec',
+		url='https://github.com/blr246/adbs-repcrec',
 		packages=find_packages(),
 		scripts=[
 			'bin/repcrec',

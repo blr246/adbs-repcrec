@@ -1,0 +1,10 @@
+// Test that a transaction can abort while blocked.
+begin(T1)
+begin(T2)
+R(T2, x2)
+W(T1, x2, 8) // Should be blocked now
+end(T1)
+end(T2)
+---
+assertAborted(T1)
+assertCommitted(T2)
